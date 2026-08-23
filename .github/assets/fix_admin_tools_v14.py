@@ -2,10 +2,13 @@ from pathlib import Path
 p=Path('app/src/main/java/com/astrolife/app/MainActivityV2.kt')
 s=p.read_text(encoding='utf-8')
 
-# Normalize any older dynamic payment placeholders to V14.
+# Normalize older checkout placeholders to V14 without breaking earlier top-level defaults.
 s=s.replace('${RWUpiV13}','${RWUpiV14}').replace('${RWPayeeV13}','${RWPayeeV14}')
 s=s.replace('harshrawal1929-1@okicici','${RWUpiV14}')
 s=s.replace('Haresh Rawal','${RWPayeeV14}')
+# Older V13 declarations are evaluated before V14 exists; keep their literal defaults valid.
+s=s.replace('private var RWPayeeV13="${RWPayeeV14}"','private var RWPayeeV13="Haresh Rawal"')
+s=s.replace('private var RWUpiV13="${RWUpiV14}"','private var RWUpiV13="harshrawal1929-1@okicici"')
 
 anchor='@Composable fun RawalworldV2()'
 helper=r'''private var RWPayeeV14="Haresh Rawal"
