@@ -97,7 +97,7 @@ shop = r'''@Composable fun ShopScreen(lang:String){
 
 s = s[:start] + shop + '\n\n' + s[end:]
 
-# Replace the deeply nested donation button lambda with a simple compiler-safe flow.
+# Keep donation flow simple and Compose-safe.
 d_start = s.find('@Composable fun DonationScreen(lang:String,back:()->Unit){')
 d_end = s.find('@Composable fun AdminScreen', d_start)
 if d_start < 0 or d_end < 0:
@@ -122,15 +122,15 @@ donation = r'''@Composable fun DonationScreen(lang:String,back:()->Unit){
         OutlinedTextField(note,{note=it},label={Text(rwText(lang,"Purpose / note","હેતુ / નોંધ","उद्देश्य / नोट","Objet / note"))},modifier=Modifier.fillMaxWidth())
 
         Button(
-            onClick={
-                val donationAmount=amount.toDoubleOrNull()
-                if(name.isBlank() || mobile.isBlank() || donationAmount==null || donationAmount<=0.0){
-                    msg=rwText(lang,"Enter donor name, mobile and valid amount.","દાતાનું નામ, મોબાઇલ અને માન્ય રકમ દાખલ કરો.","दाता का नाम, मोबाइल और मान्य राशि दर्ज करें।","Saisissez nom, téléphone et montant valide.")
+            onClick = {
+                val donationAmount = amount.toDoubleOrNull()
+                if(name.isBlank() || mobile.isBlank() || donationAmount == null || donationAmount <= 0.0){
+                    msg = "Enter donor name, mobile and valid amount."
                 }else{
-                    val donorName=name.trim()
-                    val donorMobile=mobile.trim()
-                    val purpose=note.trim()
-                    Thread{
+                    val donorName = name.trim()
+                    val donorMobile = mobile.trim()
+                    val purpose = note.trim()
+                    Thread(Runnable {
                         try{
                             write("donations","POST",JSONObject()
                                 .put("donor_name",donorName)
@@ -141,22 +141,22 @@ donation = r'''@Composable fun DonationScreen(lang:String,back:()->Unit){
                                 .put("payment_method","UPI / GPay")
                                 .put("payment_status","initiated"))
                         }catch(_:Exception){}
-                    }.start()
-                    loadPayment{payee,upi->
+                    }).start()
+                    loadPayment { payee, upi ->
                         try{
-                            val paymentNote="Donation for needy people"+(if(purpose.isBlank())"" else " - $purpose")
-                            val uri=Uri.parse("upi://pay?pa=${Uri.encode(upi)}&pn=${Uri.encode(payee)}&am=${String.format("%.2f",donationAmount)}&cu=INR&tn=${Uri.encode(paymentNote)}")
-                            context.startActivity(Intent(Intent.ACTION_VIEW,uri))
-                            msg=rwText(lang,"Opening UPI / GPay...","UPI / GPay ખોલી રહ્યા છીએ...","UPI / GPay खोला जा रहा है...","Ouverture UPI / GPay...")
+                            val paymentNote = if(purpose.isBlank()) "Donation for needy people" else "Donation for needy people - $purpose"
+                            val uriText = "upi://pay?pa=${Uri.encode(upi)}&pn=${Uri.encode(payee)}&am=${String.format("%.2f",donationAmount)}&cu=INR&tn=${Uri.encode(paymentNote)}"
+                            context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(uriText)))
+                            msg = "Opening UPI / GPay..."
                         }catch(_:Exception){
-                            msg=rwText(lang,"UPI app could not open.","UPI એપ ખોલી શકાઈ નહીં.","UPI ऐप नहीं खुल सका।","Impossible d'ouvrir l'application UPI.")
+                            msg = "UPI app could not open."
                         }
                     }
                 }
             },
-            modifier=Modifier.fillMaxWidth().padding(top=10.dp)
+            modifier = Modifier.fillMaxWidth().padding(top=10.dp)
         ){
-            Text(rwText(lang,"Donate with UPI / GPay","UPI / GPay થી દાન કરો","UPI / GPay से दान करें","Donner avec UPI / GPay"))
+            Text("Donate with UPI / GPay")
         }
         if(msg.isNotBlank())Text(msg,Modifier.padding(top=8.dp))
     }
