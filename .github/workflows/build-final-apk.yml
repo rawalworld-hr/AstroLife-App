@@ -65,6 +65,16 @@ jobs:
           python3 .github/scripts/sync_v120.py
           python3 .github/scripts/fix_v120_compile.py
 
+          # Final compiler-safe patch for Booking submit button.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/src/main/java/com/astrolife/app/MainActivity.kt')
+          s=p.read_text()
+          s=s.replace('Button(enabled=!busy,onClick={','Button(onClick={',1)
+          s=s.replace('},Modifier.fillMaxWidth().padding(top=10.dp)){Text(rwText(lang,"Submit Request"','},modifier=Modifier.fillMaxWidth().padding(top=10.dp),enabled=!busy){Text(rwText(lang,"Submit Request"',1)
+          p.write_text(s)
+          PY
+
           mkdir -p app/src/main/res/drawable
           cat > app/src/main/res/drawable/rawalworld_ganeshji_final.xml <<'XML'
           <?xml version="1.0" encoding="utf-8"?>
