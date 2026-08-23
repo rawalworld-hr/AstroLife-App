@@ -1,187 +1,64 @@
 Rawalworld APK compiler errors
-Generated: 2026-08-23T08:07:05Z
+Generated: 2026-08-23T09:28:01Z
 
-40:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:3398 No value passed for parameter 'content'.
-41:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:4172 Syntax error: Expecting ')'.
-42:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:4173 Syntax error: Unexpected tokens (use ';' to separate expressions on the same line).
-43:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:4208 @Composable invocations can only happen from the context of a @Composable function
-44:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:4960 No value passed for parameter 'content'.
-45:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5605 Syntax error: Expecting ')'.
-46:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5606 Syntax error: Unexpected tokens (use ';' to separate expressions on the same line).
-47:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5641 @Composable invocations can only happen from the context of a @Composable function
-48:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5868 Syntax error: Expecting a top level declaration.
-49:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5874 Syntax error: Expecting a top level declaration.
-50:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5875 Syntax error: Expecting a top level declaration.
-51:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5883 Syntax error: Expecting a top level declaration.
-52:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5884 Syntax error: Expecting a top level declaration.
-53:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5890 Syntax error: Expecting a top level declaration.
-54:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5891 Syntax error: Expecting a top level declaration.
-55:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5893 Syntax error: Expecting a top level declaration.
-56:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5894 Syntax error: Expecting a top level declaration.
-57:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5896 Syntax error: Expecting a top level declaration.
-58:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5897 Syntax error: Expecting a top level declaration.
-59:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5899 Syntax error: Expecting a top level declaration.
-60:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5903 Syntax error: Expecting a top level declaration.
-61:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5904 Syntax error: Expecting a top level declaration.
-62:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5905 Syntax error: Expecting a top level declaration.
-63:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5927 Syntax error: Expecting a top level declaration.
-64:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5928 Syntax error: Expecting a top level declaration.
-65:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5929 Syntax error: Expecting a top level declaration.
-66:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5934 Syntax error: Expecting a top level declaration.
-67:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5935 Syntax error: Expecting a top level declaration.
-68:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5941 Syntax error: Expecting a top level declaration.
-69:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5942 Syntax error: Expecting a top level declaration.
-70:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5952 Syntax error: Expecting a top level declaration.
-71:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5953 Syntax error: Expecting a top level declaration.
-72:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5963 Syntax error: Expecting a top level declaration.
-73:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5964 Syntax error: Expecting a top level declaration.
-74:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5968 Syntax error: Expecting a top level declaration.
-75:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5970 Syntax error: Expecting a top level declaration.
-76:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5974 Syntax error: Expecting a top level declaration.
-77:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5975 Syntax error: Expecting a top level declaration.
-78:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5983 Syntax error: Expecting a top level declaration.
-79:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5984 Syntax error: Expecting a top level declaration.
-80:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5996 Syntax error: Expecting a top level declaration.
-81:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5997 Syntax error: Expecting a top level declaration.
-82:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5998 Syntax error: Expecting a top level declaration.
-83:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5999 Syntax error: Expecting a top level declaration.
-84:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5999 Functions which invoke @Composable functions must be marked with the @Composable annotation
-85:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:5999 Function declaration must have a name.
-86:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6000 @Composable invocations can only happen from the context of a @Composable function
-87:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6057 Unresolved reference 'service'.
-88:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6105 Unresolved reference 'service'.
-89:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6167 Unresolved reference 'cn'.
-90:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6171 Unresolved reference 'cn'.
-91:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6174 Unresolved reference 'it'.
-92:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6185 @Composable invocations can only happen from the context of a @Composable function
-93:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6259 Unresolved reference 'cp'.
-94:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6263 Unresolved reference 'cp'.
-95:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6266 Unresolved reference 'it'.
-96:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6277 @Composable invocations can only happen from the context of a @Composable function
-97:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6344 Unresolved reference 'ce'.
-98:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6348 Unresolved reference 'ce'.
-99:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6351 Unresolved reference 'it'.
-100:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6362 @Composable invocations can only happen from the context of a @Composable function
-101:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6429 Unresolved reference 'cw'.
-102:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6433 Unresolved reference 'cw'.
-103:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6436 Unresolved reference 'it'.
-104:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6447 @Composable invocations can only happen from the context of a @Composable function
-105:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6565 Unresolved reference 'service'.
-106:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6577 Unresolved reference 'put'.
-107:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6596 Unresolved reference 'service'.
-108:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6630 Unresolved reference 'cn'.
-109:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6646 Unresolved reference 'cp'.
-110:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6662 Unresolved reference 'ce'.
-111:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6681 Unresolved reference 'cw'.
-112:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6788 Unresolved reference 'session'.
-113:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7117 Unresolved reference 'msg'.
-114:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7132 Unresolved reference 'service'.
-115:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7271 Syntax error: Expecting a top level declaration.
-116:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7277 Syntax error: Expecting a top level declaration.
-117:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7278 Syntax error: Expecting a top level declaration.
-118:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7286 Syntax error: Expecting a top level declaration.
-119:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7287 Syntax error: Expecting a top level declaration.
-120:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7293 Syntax error: Expecting a top level declaration.
-121:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7294 Syntax error: Expecting a top level declaration.
-122:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7295 Syntax error: Expecting a top level declaration.
-123:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7296 Syntax error: Expecting a top level declaration.
-124:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7298 Syntax error: Expecting a top level declaration.
-125:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7299 Syntax error: Expecting a top level declaration.
-126:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7301 Syntax error: Expecting a top level declaration.
-127:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7305 Syntax error: Expecting a top level declaration.
-128:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7306 Syntax error: Expecting a top level declaration.
-129:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7309 Syntax error: Expecting a top level declaration.
-130:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7311 Syntax error: Expecting a top level declaration.
-131:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7325 Syntax error: Expecting a top level declaration.
-132:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7326 Syntax error: Expecting a top level declaration.
-133:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7333 Syntax error: Expecting a top level declaration.
-134:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7334 Syntax error: Expecting a top level declaration.
-135:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7340 Syntax error: Expecting a top level declaration.
-136:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7341 Syntax error: Expecting a top level declaration.
-137:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7349 Syntax error: Expecting a top level declaration.
-138:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7350 Syntax error: Expecting a top level declaration.
-139:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7358 Syntax error: Expecting a top level declaration.
-140:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7359 Syntax error: Expecting a top level declaration.
-141:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7371 Syntax error: Expecting a top level declaration.
-142:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7372 Syntax error: Expecting a top level declaration.
-143:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7373 Syntax error: Expecting a top level declaration.
-144:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7374 Syntax error: Expecting a top level declaration.
-145:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7374 Functions which invoke @Composable functions must be marked with the @Composable annotation
-146:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7374 Function declaration must have a name.
-147:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7375 @Composable invocations can only happen from the context of a @Composable function
-148:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7391 Syntax error: Expecting a top level declaration.
-149:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7397 Syntax error: Expecting a top level declaration.
-150:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7398 Syntax error: Expecting a top level declaration.
-151:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7406 Syntax error: Expecting a top level declaration.
-152:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7407 Syntax error: Expecting a top level declaration.
-153:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7413 Syntax error: Expecting a top level declaration.
-154:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7414 Syntax error: Expecting a top level declaration.
-155:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7416 Syntax error: Expecting a top level declaration.
-156:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7417 Syntax error: Expecting a top level declaration.
-157:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7419 Syntax error: Expecting a top level declaration.
-158:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7420 Syntax error: Expecting a top level declaration.
-159:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7421 Syntax error: Expecting a top level declaration.
-160:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7422 Syntax error: Expecting a top level declaration.
-165:FAILURE: Build failed with an exception.
-170:   > Compilation error. See log for more details
+40:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:947 Unresolved reference 'ShopV2'.
+41:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:967 Unresolved reference 'GalleryV2'.
+42:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:990 Unresolved reference 'ProfileV2'.
+43:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:346 Cannot infer type for this parameter. Please specify it explicitly.
+44:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:349 Cannot infer type for this parameter. Please specify it explicitly.
+45:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:350 Unresolved reference 'RemoteImageV2'.
+46:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:243:220 Unresolved reference 'RemoteImageV2'.
+51:FAILURE: Build failed with an exception.
+56:   > Compilation error. See log for more details
 
 --- Tail ---
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6577 Unresolved reference 'put'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6596 Unresolved reference 'service'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6630 Unresolved reference 'cn'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6646 Unresolved reference 'cp'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6662 Unresolved reference 'ce'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6681 Unresolved reference 'cw'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:6788 Unresolved reference 'session'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7117 Unresolved reference 'msg'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7132 Unresolved reference 'service'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7271 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7277 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7278 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7286 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7287 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7293 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7294 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7295 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7296 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7298 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7299 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7301 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7305 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7306 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7309 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7311 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7325 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7326 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7333 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7334 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7340 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7341 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7349 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7350 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7358 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7359 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7371 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7372 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7373 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7374 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7374 Functions which invoke @Composable functions must be marked with the @Composable annotation
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7374 Function declaration must have a name.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7375 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7391 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7397 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7398 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7406 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7407 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7413 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7414 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7416 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7417 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7419 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7420 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7421 Syntax error: Expecting a top level declaration.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7422 Syntax error: Expecting a top level declaration.
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/apkbuild-1787472391136.json
+Starting a Gradle Daemon (subsequent builds will be faster)
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:processDebugManifestForPackage
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugJniLibFolders
+> Task :app:mergeLibDexDebug
+> Task :app:mergeDebugNativeLibs
+> Task :app:processDebugResources
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so.
+
+> Task :app:writeDebugSigningConfigVersions
+> Task :app:mergeExtDexDebug
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:947 Unresolved reference 'ShopV2'.
+e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:967 Unresolved reference 'GalleryV2'.
+e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:990 Unresolved reference 'ProfileV2'.
+e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:346 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:349 Cannot infer type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:350 Unresolved reference 'RemoteImageV2'.
+e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:243:220 Unresolved reference 'RemoteImageV2'.
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/apkbuild-1787477246164.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/AstroLife-App/AstroLife-App/build/reports/problems/problems-report.html
 
@@ -204,5 +81,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.7.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 45s
+BUILD FAILED in 44s
 28 actionable tasks: 28 executed
