@@ -5,7 +5,7 @@ on:
   push:
     branches: [ main, master ]
     paths:
-      - '.github/assets/MainActivity.final.kt'
+      - '.github/assets/MainActivity.v2.kt'
       - '.github/assets/rawalworld_logo.b64'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
@@ -23,10 +23,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Prepare final Rawalworld source and logo
+      - name: Prepare Rawalworld V2 source and logo
         shell: bash
         run: |
-          cp .github/assets/MainActivity.final.kt app/src/main/java/com/astrolife/app/MainActivity.kt
+          cp .github/assets/MainActivity.v2.kt app/src/main/java/com/astrolife/app/MainActivityV2.kt
           mkdir -p app/src/main/res/drawable
           base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_logo.jpg
           python3 - <<'PY'
@@ -41,6 +41,14 @@ jobs:
           app.set('{%s}label'%ns,'Rawalworld')
           app.set('{%s}icon'%ns,'@drawable/rawalworld_logo')
           app.set('{%s}roundIcon'%ns,'@drawable/rawalworld_logo')
+          for a in list(app.findall('activity')):
+              app.remove(a)
+          act=ET.SubElement(app,'activity')
+          act.set('{%s}name'%ns,'.MainActivityV2')
+          act.set('{%s}exported'%ns,'true')
+          f=ET.SubElement(act,'intent-filter')
+          ET.SubElement(f,'action').set('{%s}name'%ns,'android.intent.action.MAIN')
+          ET.SubElement(f,'category').set('{%s}name'%ns,'android.intent.category.LAUNCHER')
           tree.write(path,encoding='utf-8',xml_declaration=True)
           PY
 
