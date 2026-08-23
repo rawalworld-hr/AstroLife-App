@@ -1,5 +1,5 @@
 Rawalworld APK compiler errors
-Generated: 2026-08-23T07:41:19Z
+Generated: 2026-08-23T08:07:05Z
 
 40:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:3398 No value passed for parameter 'content'.
 41:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:4172 Syntax error: Expecting ')'.
@@ -181,7 +181,7 @@ e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/as
 e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7420 Syntax error: Expecting a top level declaration.
 e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7421 Syntax error: Expecting a top level declaration.
 e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:112:7422 Syntax error: Expecting a top level declaration.
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/apkbuild-1787470850988.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/apkbuild-1787472391136.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/AstroLife-App/AstroLife-App/build/reports/problems/problems-report.html
 
@@ -204,5 +204,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.7.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 36s
+BUILD FAILED in 45s
 28 actionable tasks: 28 executed
