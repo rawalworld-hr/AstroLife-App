@@ -1,4 +1,5 @@
 name: Build Final Rawalworld APK
+# Trigger rebuild after donation compile fix
 
 on:
   workflow_dispatch:
