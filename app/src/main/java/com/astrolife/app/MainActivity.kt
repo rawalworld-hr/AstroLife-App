@@ -38,14 +38,10 @@ import java.net.URL
 data class Service(val icon: String, val title: String, val subtitle: String, val options: List<String>)
 data class Booking(val service: String, val name: String, val mobile: String, val city: String, val date: String, val note: String)
 data class Product(val name: String, val description: String, val price: String, val url: String?)
-data class AdminData(
-    val bookingCount: Int,
-    val astrologyCount: Int,
-    val productCount: Int,
-    val orderCount: Int,
-    val bookingLines: List<String>,
-    val astrologyLines: List<String>
-)
+data class AdminBooking(val id: String, val service: String, val name: String, val mobile: String, val city: String, val status: String)
+data class AdminAstrology(val id: String, val type: String, val name: String, val mobile: String, val place: String, val status: String)
+data class AdminOrder(val id: String, val name: String, val mobile: String, val amount: String, val status: String)
+data class AdminData(val bookings: List<AdminBooking>, val astrology: List<AdminAstrology>, val productCount: Int, val orders: List<AdminOrder>)
 
 private const val SUPABASE_URL = "https://hcpvuripnlhofxfczyyb.supabase.co"
 private const val SUPABASE_KEY = "sb_publishable_J8YoD4yenQO-nlEMoC1kvA_3_vJgGjg"
@@ -111,27 +107,16 @@ private val details = mapOf(
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            MaterialTheme(colorScheme = lightColorScheme(primary = Brand, surface = Color.White, background = WarmBg)) {
-                RawalworldApp()
-            }
-        }
+        setContent { MaterialTheme(colorScheme = lightColorScheme(primary = Brand, surface = Color.White, background = WarmBg)) { RawalworldApp() } }
     }
 }
 
-private fun openWeb(context: Context, url: String) {
-    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-}
-
+private fun openWeb(context: Context, url: String) { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
 private fun loadBookings(context: Context): List<Booking> {
     val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("bookings", "") ?: ""
     if (raw.isBlank()) return emptyList()
-    return raw.split("\u001e").mapNotNull { row ->
-        val parts = row.split("\u001f")
-        if (parts.size < 6) null else Booking(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5])
-    }
+    return raw.split("\u001e").mapNotNull { row -> val p = row.split("\u001f"); if (p.size < 6) null else Booking(p[0], p[1], p[2], p[3], p[4], p[5]) }
 }
-
 private fun saveBookings(context: Context, bookings: List<Booking>) {
     val raw = bookings.joinToString("\u001e") { listOf(it.service, it.name, it.mobile, it.city, it.date, it.note).joinToString("\u001f") }
     context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("bookings", raw).apply()
@@ -139,446 +124,129 @@ private fun saveBookings(context: Context, bookings: List<Booking>) {
 
 private fun postJson(table: String, payload: JSONObject, onDone: (Boolean) -> Unit) {
     Thread {
-        var success = false
+        var ok = false
         try {
-            val connection = URL("$SUPABASE_URL/rest/v1/$table").openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("apikey", SUPABASE_KEY)
-            connection.setRequestProperty("Prefer", "return=minimal")
-            connection.doOutput = true
-            connection.outputStream.use { it.write(payload.toString().toByteArray()) }
-            success = connection.responseCode in 200..299
-            connection.disconnect()
-        } catch (_: Exception) {
-        }
-        Handler(Looper.getMainLooper()).post { onDone(success) }
+            val c = URL("$SUPABASE_URL/rest/v1/$table").openConnection() as HttpURLConnection
+            c.requestMethod = "POST"; c.setRequestProperty("Content-Type", "application/json"); c.setRequestProperty("apikey", SUPABASE_KEY); c.setRequestProperty("Prefer", "return=minimal"); c.doOutput = true
+            c.outputStream.use { it.write(payload.toString().toByteArray()) }; ok = c.responseCode in 200..299; c.disconnect()
+        } catch (_: Exception) {}
+        Handler(Looper.getMainLooper()).post { onDone(ok) }
     }.start()
 }
 
 private fun fetchProducts(onDone: (List<Product>) -> Unit) {
     Thread {
-        val result = mutableListOf<Product>()
+        val out = mutableListOf<Product>()
         try {
-            val endpoint = "$SUPABASE_URL/rest/v1/products?select=name,description,price,currency,external_url,is_free&is_active=eq.true"
-            val connection = URL(endpoint).openConnection() as HttpURLConnection
-            connection.setRequestProperty("apikey", SUPABASE_KEY)
-            val body = connection.inputStream.bufferedReader().use { it.readText() }
-            val array = JSONArray(body)
-            for (i in 0 until array.length()) {
-                val item = array.getJSONObject(i)
-                val isFree = item.optBoolean("is_free")
-                result.add(Product(item.optString("name"), item.optString("description"), if (isFree) "FREE" else "${item.optString("currency")} ${item.optString("price")}", item.optString("external_url").takeIf { it.isNotBlank() }))
-            }
-            connection.disconnect()
-        } catch (_: Exception) {
-        }
-        Handler(Looper.getMainLooper()).post { onDone(result) }
+            val c = URL("$SUPABASE_URL/rest/v1/products?select=name,description,price,currency,external_url,is_free&is_active=eq.true").openConnection() as HttpURLConnection
+            c.setRequestProperty("apikey", SUPABASE_KEY)
+            val arr = JSONArray(c.inputStream.bufferedReader().use { it.readText() })
+            for (i in 0 until arr.length()) { val x = arr.getJSONObject(i); val free = x.optBoolean("is_free"); out += Product(x.optString("name"), x.optString("description"), if (free) "FREE" else "${x.optString("currency")} ${x.optString("price")}", x.optString("external_url").takeIf { it.isNotBlank() }) }
+            c.disconnect()
+        } catch (_: Exception) {}
+        Handler(Looper.getMainLooper()).post { onDone(out) }
     }.start()
 }
 
 private fun adminLogin(email: String, password: String, onDone: (String?, String) -> Unit) {
     Thread {
-        var token: String? = null
-        var message = "Login failed."
+        var token: String? = null; var msg = "Login failed."
         try {
-            val connection = URL("$SUPABASE_URL/auth/v1/token?grant_type=password").openConnection() as HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("apikey", SUPABASE_KEY)
-            connection.doOutput = true
-            val payload = JSONObject().put("email", email).put("password", password)
-            connection.outputStream.use { it.write(payload.toString().toByteArray()) }
-            val code = connection.responseCode
-            val body = if (code in 200..299) connection.inputStream.bufferedReader().use { it.readText() } else connection.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-            if (code in 200..299) {
-                token = JSONObject(body).optString("access_token").takeIf { it.isNotBlank() }
-                message = if (token != null) "Login successful." else "Login response was incomplete."
-            } else {
-                message = "Login failed. Check email/password."
-            }
-            connection.disconnect()
-        } catch (_: Exception) {
-            message = "Unable to connect to admin login."
-        }
-        Handler(Looper.getMainLooper()).post { onDone(token, message) }
+            val c = URL("$SUPABASE_URL/auth/v1/token?grant_type=password").openConnection() as HttpURLConnection
+            c.requestMethod = "POST"; c.setRequestProperty("Content-Type", "application/json"); c.setRequestProperty("apikey", SUPABASE_KEY); c.doOutput = true
+            c.outputStream.use { it.write(JSONObject().put("email", email).put("password", password).toString().toByteArray()) }
+            val code = c.responseCode
+            val body = if (code in 200..299) c.inputStream.bufferedReader().use { it.readText() } else c.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+            if (code in 200..299) { token = JSONObject(body).optString("access_token").takeIf { it.isNotBlank() }; msg = if (token != null) "Login successful." else "Login response incomplete." } else msg = "Login failed. Check email/password."
+            c.disconnect()
+        } catch (_: Exception) { msg = "Unable to connect to admin login." }
+        Handler(Looper.getMainLooper()).post { onDone(token, msg) }
+    }.start()
+}
+
+private fun adminWrite(token: String, path: String, method: String, payload: JSONObject, onDone: (Boolean) -> Unit) {
+    Thread {
+        var ok = false
+        try {
+            val c = URL("$SUPABASE_URL/rest/v1/$path").openConnection() as HttpURLConnection
+            c.requestMethod = method; c.setRequestProperty("Content-Type", "application/json"); c.setRequestProperty("apikey", SUPABASE_KEY); c.setRequestProperty("Authorization", "Bearer $token"); c.setRequestProperty("Prefer", "return=minimal"); c.doOutput = true
+            c.outputStream.use { it.write(payload.toString().toByteArray()) }; ok = c.responseCode in 200..299; c.disconnect()
+        } catch (_: Exception) {}
+        Handler(Looper.getMainLooper()).post { onDone(ok) }
     }.start()
 }
 
 private fun fetchAdminData(token: String, onDone: (AdminData?, String) -> Unit) {
     Thread {
         try {
-            fun getArray(path: String): JSONArray {
-                val connection = URL("$SUPABASE_URL/rest/v1/$path").openConnection() as HttpURLConnection
-                connection.setRequestProperty("apikey", SUPABASE_KEY)
-                connection.setRequestProperty("Authorization", "Bearer $token")
-                val code = connection.responseCode
-                if (code !in 200..299) {
-                    connection.disconnect()
-                    throw IllegalStateException("Admin access denied")
-                }
-                val text = connection.inputStream.bufferedReader().use { it.readText() }
-                connection.disconnect()
-                return JSONArray(text)
-            }
-
-            val bookings = getArray("bookings?select=service,customer_name,mobile,city,status&order=created_at.desc&limit=20")
-            val astrology = getArray("astrology_requests?select=request_type,customer_name,mobile,birth_place,status&order=created_at.desc&limit=20")
-            val products = getArray("products?select=id&is_active=eq.true")
-            val orders = getArray("orders?select=id")
-
-            val bookingLines = mutableListOf<String>()
-            for (i in 0 until bookings.length()) {
-                val x = bookings.getJSONObject(i)
-                bookingLines.add("${x.optString("service", "Booking")} • ${x.optString("customer_name")} • ${x.optString("mobile")} • ${x.optString("city")} • ${x.optString("status", "submitted")}")
-            }
-            val astrologyLines = mutableListOf<String>()
-            for (i in 0 until astrology.length()) {
-                val x = astrology.getJSONObject(i)
-                astrologyLines.add("${x.optString("request_type", "Astrology")} • ${x.optString("customer_name")} • ${x.optString("mobile")} • ${x.optString("birth_place")} • ${x.optString("status", "submitted")}")
-            }
-
-            val data = AdminData(bookings.length(), astrology.length(), products.length(), orders.length(), bookingLines, astrologyLines)
-            Handler(Looper.getMainLooper()).post { onDone(data, "Dashboard updated.") }
-        } catch (_: Exception) {
-            Handler(Looper.getMainLooper()).post { onDone(null, "Unable to load admin data. This account may not have admin access.") }
-        }
+            fun arr(path: String): JSONArray { val c = URL("$SUPABASE_URL/rest/v1/$path").openConnection() as HttpURLConnection; c.setRequestProperty("apikey", SUPABASE_KEY); c.setRequestProperty("Authorization", "Bearer $token"); if (c.responseCode !in 200..299) { c.disconnect(); throw IllegalStateException() }; val a = JSONArray(c.inputStream.bufferedReader().use { it.readText() }); c.disconnect(); return a }
+            val b = arr("bookings?select=id,service,customer_name,mobile,city,status&order=created_at.desc&limit=20")
+            val a = arr("astrology_requests?select=id,request_type,customer_name,mobile,birth_place,status&order=created_at.desc&limit=20")
+            val p = arr("products?select=id&is_active=eq.true")
+            val o = arr("orders?select=id,customer_name,mobile,total_amount,currency,order_status&order=created_at.desc&limit=20")
+            val bookings = (0 until b.length()).map { i -> val x=b.getJSONObject(i); AdminBooking(x.optString("id"),x.optString("service"),x.optString("customer_name"),x.optString("mobile"),x.optString("city"),x.optString("status","submitted")) }
+            val astrology = (0 until a.length()).map { i -> val x=a.getJSONObject(i); AdminAstrology(x.optString("id"),x.optString("request_type","kundli"),x.optString("customer_name"),x.optString("mobile"),x.optString("birth_place"),x.optString("status","submitted")) }
+            val orders = (0 until o.length()).map { i -> val x=o.getJSONObject(i); AdminOrder(x.optString("id"),x.optString("customer_name"),x.optString("mobile"),"${x.optString("currency","INR")} ${x.optString("total_amount","0")}",x.optString("order_status","submitted")) }
+            Handler(Looper.getMainLooper()).post { onDone(AdminData(bookings, astrology, p.length(), orders), "Dashboard updated.") }
+        } catch (_: Exception) { Handler(Looper.getMainLooper()).post { onDone(null, "Unable to load admin data. This account may not have admin access.") } }
     }.start()
 }
 
-@Composable
-fun RawalworldApp() {
-    val context = LocalContext.current
-    var screen by remember { mutableStateOf("home") }
-    var selectedService by remember { mutableStateOf<Service?>(null) }
-    var bookings by remember { mutableStateOf(loadBookings(context)) }
+@Composable fun RawalworldApp() {
+    val context = LocalContext.current; var screen by remember { mutableStateOf("home") }; var selected by remember { mutableStateOf<Service?>(null) }; var bookings by remember { mutableStateOf(loadBookings(context)) }
+    Scaffold(bottomBar = { NavigationBar {
+        NavigationBarItem(screen=="home", {screen="home";selected=null}, {Icon(Icons.Default.Home,null)}, label={Text("Home")})
+        NavigationBarItem(screen=="bookings", {screen="bookings";bookings=loadBookings(context)}, {Icon(Icons.Default.DateRange,null)}, label={Text("Bookings")})
+        NavigationBarItem(screen=="service"&&selected?.title=="Online Shopping", {selected=services.last();screen="service"}, {Icon(Icons.Default.ShoppingCart,null)}, label={Text("Shop")})
+        NavigationBarItem(screen=="profile", {screen="profile"}, {Icon(Icons.Default.Person,null)}, label={Text("Profile")})
+        NavigationBarItem(screen=="admin", {screen="admin"}, {Text("🔐")}, label={Text("Admin")})
+    }}) { pad -> Box(Modifier.fillMaxSize().padding(pad)) { when(screen) {
+        "service" -> selected?.let { ServiceScreen(it,{screen="home"},{screen="booking"}) }
+        "booking" -> selected?.let { s -> BookingScreen(s,{screen="service"}) { b -> bookings=bookings+b;saveBookings(context,bookings) } }
+        "bookings" -> BookingsScreen(bookings); "profile" -> ProfileScreen(); "admin" -> AdminScreen(); else -> HomeScreen {selected=it;screen="service"}
+    } } }
+}
 
-    Scaffold(bottomBar = {
-        NavigationBar {
-            NavigationBarItem(selected = screen == "home", onClick = { screen = "home"; selectedService = null }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Home") })
-            NavigationBarItem(selected = screen == "bookings", onClick = { screen = "bookings"; bookings = loadBookings(context) }, icon = { Icon(Icons.Default.DateRange, null) }, label = { Text("Bookings") })
-            NavigationBarItem(selected = screen == "service" && selectedService?.title == "Online Shopping", onClick = { selectedService = services.last(); screen = "service" }, icon = { Icon(Icons.Default.ShoppingCart, null) }, label = { Text("Shop") })
-            NavigationBarItem(selected = screen == "profile", onClick = { screen = "profile" }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Profile") })
-            NavigationBarItem(selected = screen == "admin", onClick = { screen = "admin" }, icon = { Text("🔐") }, label = { Text("Admin") })
-        }
-    }) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            when (screen) {
-                "service" -> selectedService?.let { ServiceScreen(it, { screen = "home" }, { screen = "booking" }) }
-                "booking" -> selectedService?.let { service -> BookingScreen(service, { screen = "service" }) { booking -> bookings = bookings + booking; saveBookings(context, bookings) } }
-                "bookings" -> BookingsScreen(bookings)
-                "profile" -> ProfileScreen()
-                "admin" -> AdminScreen()
-                else -> HomeScreen { selectedService = it; screen = "service" }
-            }
-        }
+@Composable fun HomeScreen(onOpen:(Service)->Unit) {
+    var q by remember { mutableStateOf("") }; val filtered=services.filter { q.isBlank()||it.title.contains(q,true)||it.subtitle.contains(q,true)||it.options.any { o->o.contains(q,true) } }
+    Column(Modifier.fillMaxSize().padding(horizontal=16.dp)) { Spacer(Modifier.height(14.dp)); Text("Rawalworld",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold); Text("Gujarat lifestyle & services super app",style=MaterialTheme.typography.bodySmall); Spacer(Modifier.height(14.dp)); Card(colors=CardDefaults.cardColors(containerColor=Hero),shape=RoundedCornerShape(24.dp),modifier=Modifier.fillMaxWidth()){Row(Modifier.padding(22.dp),verticalAlignment=Alignment.CenterVertically){Column(Modifier.weight(1f)){Text("Everything you need,\nin one app.",color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.ExtraBold);Text("Astrology, events, consultancy, travel and shopping.",color=Color.White.copy(alpha=.86f))};Text("RW",color=Color.White,style=MaterialTheme.typography.displaySmall,fontWeight=FontWeight.Black)}}; Spacer(Modifier.height(12.dp)); OutlinedTextField(q,{q=it},leadingIcon={Icon(Icons.Default.Search,null)},placeholder={Text("Search services...")},modifier=Modifier.fillMaxWidth()); Spacer(Modifier.height(8.dp)); Text("📞 +91 77093 78969  •  ✉ rawalworld@gmail.com",style=MaterialTheme.typography.bodySmall); Text("📍 Gujarat, India  •  💳 Google Pay",style=MaterialTheme.typography.bodySmall); Spacer(Modifier.height(14.dp)); LazyVerticalGrid(columns=GridCells.Fixed(2),verticalArrangement=Arrangement.spacedBy(12.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(bottom=20.dp)){items(filtered){s->Card(onClick={onOpen(s)},shape=RoundedCornerShape(18.dp),modifier=Modifier.height(150.dp)){Column(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.SpaceBetween){Text(s.icon,style=MaterialTheme.typography.headlineMedium);Column{Text(s.title,fontWeight=FontWeight.Bold);Text(s.subtitle,style=MaterialTheme.typography.bodySmall)}}}}}
     }
 }
 
-@Composable
-fun HomeScreen(onOpen: (Service) -> Unit) {
-    var query by remember { mutableStateOf("") }
-    val filtered = services.filter { service -> query.isBlank() || service.title.contains(query, true) || service.subtitle.contains(query, true) || service.options.any { it.contains(query, true) } }
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        Spacer(Modifier.height(14.dp))
-        Text("Rawalworld", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
-        Text("Gujarat lifestyle & services super app", style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(14.dp))
-        Card(colors = CardDefaults.cardColors(containerColor = Hero), shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth()) {
-            Row(Modifier.padding(22.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Everything you need,\nin one app.", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                    Text("Astrology, events, consultancy, travel and shopping.", color = Color.White.copy(alpha = 0.86f))
-                }
-                Text("RW", color = Color.White, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(value = query, onValueChange = { query = it }, leadingIcon = { Icon(Icons.Default.Search, null) }, placeholder = { Text("Search services...") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        Text("📞 +91 77093 78969  •  ✉ rawalworld@gmail.com", style = MaterialTheme.typography.bodySmall)
-        Text("📍 Gujarat, India  •  💳 Google Pay", style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(14.dp))
-        LazyVerticalGrid(columns = GridCells.Fixed(2), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
-            items(filtered) { service ->
-                Card(onClick = { onOpen(service) }, shape = RoundedCornerShape(18.dp), modifier = Modifier.height(150.dp)) {
-                    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                        Text(service.icon, style = MaterialTheme.typography.headlineMedium)
-                        Column { Text(service.title, fontWeight = FontWeight.Bold); Text(service.subtitle, style = MaterialTheme.typography.bodySmall) }
-                    }
-                }
-            }
-        }
+@Composable fun ServiceScreen(service:Service,onBack:()->Unit,onBook:()->Unit) {
+    val context=LocalContext.current; var selectedInfo by remember{mutableStateOf<Pair<String,String>?>(null)}; var dob by remember{mutableStateOf("")}; var bt by remember{mutableStateOf("")}; var place by remember{mutableStateOf("")}; var astroMsg by remember{mutableStateOf("")}; var products by remember{mutableStateOf<List<Product>>(emptyList())}; var loading by remember{mutableStateOf(false)}
+    LaunchedEffect(service.title){if(service.title=="Online Shopping"){loading=true;fetchProducts{products=it;loading=false}}}
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){TextButton(onClick=onBack){Icon(Icons.Default.ArrowBack,null);Text(" Back to home")};Text("${service.icon} ${service.title}",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold);Text(service.subtitle);Spacer(Modifier.height(14.dp));service.options.forEach{o->Card(shape=RoundedCornerShape(14.dp),modifier=Modifier.fillMaxWidth().padding(bottom=8.dp)){Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){Text(o,Modifier.weight(1f));FilledTonalButton(onClick={selectedInfo=o to (details[o]?:"More information coming soon.")}){Text("Open")}}}};selectedInfo?.let{Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(14.dp)){Column(Modifier.padding(14.dp)){Text(it.first,fontWeight=FontWeight.Bold);Text(it.second)}}}
+        if(service.title=="Astrology"){Spacer(Modifier.height(12.dp));Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(16.dp)){Column(Modifier.padding(14.dp)){Text("Personal Astrology Details",fontWeight=FontWeight.Bold);OutlinedTextField(dob,{dob=it},label={Text("Date of birth YYYY-MM-DD")},modifier=Modifier.fillMaxWidth());OutlinedTextField(bt,{bt=it},label={Text("Birth time HH:MM")},modifier=Modifier.fillMaxWidth());OutlinedTextField(place,{place=it},label={Text("Birth place")},modifier=Modifier.fillMaxWidth());Spacer(Modifier.height(8.dp));Button(onClick={if(dob.isBlank()||bt.isBlank()||place.isBlank())astroMsg="Please fill all birth details." else {astroMsg="Submitting online...";postJson("astrology_requests",JSONObject().put("date_of_birth",dob).put("birth_time",bt).put("birth_place",place).put("request_type","kundli")){astroMsg=if(it)"Astrology request submitted online successfully." else "Online submission failed."}}},modifier=Modifier.fillMaxWidth()){Text("Submit Astrology Request")};if(astroMsg.isNotBlank())Text(astroMsg,style=MaterialTheme.typography.bodySmall)}}}
+        if(service.title=="Online Shopping"){Spacer(Modifier.height(12.dp));Text("Online Products",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);if(loading)CircularProgressIndicator() else if(products.isEmpty())Text("Could not load online products.") else products.forEach{p->Card(Modifier.fillMaxWidth().padding(vertical=6.dp),shape=RoundedCornerShape(14.dp)){Column(Modifier.padding(14.dp)){Text(p.name,fontWeight=FontWeight.Bold);Text(p.description,style=MaterialTheme.typography.bodySmall);Text(p.price,fontWeight=FontWeight.Bold);p.url?.let{u->Button(onClick={openWeb(context,u)}){Text("Open")}}}}}}
+        Spacer(Modifier.height(14.dp));Button(onClick=onBook,modifier=Modifier.fillMaxWidth()){Text("Request Booking / Quotation")}
     }
 }
 
-@Composable
-fun ServiceScreen(service: Service, onBack: () -> Unit, onBook: () -> Unit) {
-    val context = LocalContext.current
-    var selectedInfo by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var dob by remember { mutableStateOf("") }
-    var birthTime by remember { mutableStateOf("") }
-    var birthPlace by remember { mutableStateOf("") }
-    var astrologyMessage by remember { mutableStateOf("") }
-    var products by remember { mutableStateOf<List<Product>>(emptyList()) }
-    var loadingProducts by remember { mutableStateOf(false) }
+@Composable fun BookingScreen(service:Service,onBack:()->Unit,onSaved:(Booking)->Unit) {
+    val prefs=LocalContext.current.getSharedPreferences(PREFS,Context.MODE_PRIVATE);var name by remember{mutableStateOf(prefs.getString("name","")?:"")};var mobile by remember{mutableStateOf(prefs.getString("mobile","")?:"")};var city by remember{mutableStateOf(prefs.getString("city","")?:"")};var date by remember{mutableStateOf("")};var note by remember{mutableStateOf("")};var msg by remember{mutableStateOf("")};var submitting by remember{mutableStateOf(false)}
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){TextButton(onClick=onBack){Text("← Back")};Text("Booking / Quotation",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);Text(service.title);Spacer(Modifier.height(12.dp));OutlinedTextField(name,{name=it},label={Text("Name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(mobile,{mobile=it},label={Text("Mobile")},modifier=Modifier.fillMaxWidth());OutlinedTextField(city,{city=it},label={Text("City")},modifier=Modifier.fillMaxWidth());OutlinedTextField(date,{date=it},label={Text("Preferred date YYYY-MM-DD (optional)")},modifier=Modifier.fillMaxWidth());OutlinedTextField(note,{note=it},label={Text("Requirement")},minLines=3,modifier=Modifier.fillMaxWidth());Spacer(Modifier.height(10.dp));Button(enabled=!submitting,onClick={if(name.isBlank()||mobile.isBlank()||city.isBlank())msg="Please enter name, mobile and city." else{val b=Booking(service.title,name.trim(),mobile.trim(),city.trim(),date.trim(),note.trim());onSaved(b);submitting=true;msg="Submitting online...";val j=JSONObject().put("service",b.service).put("customer_name",b.name).put("mobile",b.mobile).put("city",b.city).put("source","android");if(Regex("\\d{4}-\\d{2}-\\d{2}").matches(b.date))j.put("preferred_date",b.date);if(b.note.isNotBlank())j.put("requirement",b.note);postJson("bookings",j){submitting=false;msg=if(it)"✅ Request submitted online successfully." else "⚠️ Saved on phone, but online submission failed."}}},modifier=Modifier.fillMaxWidth()){Text(if(submitting)"Submitting..." else "Submit Request")};if(msg.isNotBlank())Text(msg)}
+}
 
-    LaunchedEffect(service.title) {
-        if (service.title == "Online Shopping") {
-            loadingProducts = true
-            fetchProducts { products = it; loadingProducts = false }
-        }
-    }
+@Composable fun BookingsScreen(items:List<Booking>){Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){Text("My Bookings",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);Spacer(Modifier.height(12.dp));if(items.isEmpty())Text("No booking requests yet.");items.asReversed().forEach{b->Card(Modifier.fillMaxWidth().padding(bottom=8.dp)){Column(Modifier.padding(12.dp)){Text(b.service,fontWeight=FontWeight.Bold);Text("${b.name} • ${b.mobile} • ${b.city}",style=MaterialTheme.typography.bodySmall);if(b.date.isNotBlank())Text("Date: ${b.date}",style=MaterialTheme.typography.bodySmall);if(b.note.isNotBlank())Text(b.note,style=MaterialTheme.typography.bodySmall)}}}}}
 
-    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
-        TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null); Spacer(Modifier.width(4.dp)); Text("Back to home") }
-        Text("${service.icon} ${service.title}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
-        Text(service.subtitle)
-        Spacer(Modifier.height(14.dp))
-        service.options.forEach { option ->
-            Card(shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(option, Modifier.weight(1f))
-                    FilledTonalButton(onClick = { selectedInfo = option to (details[option] ?: "More information coming soon.") }) { Text("Open") }
-                }
-            }
-        }
-        selectedInfo?.let { info -> Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) { Column(Modifier.padding(14.dp)) { Text(info.first, fontWeight = FontWeight.Bold); Text(info.second) } } }
+@Composable fun ProfileScreen(){val context=LocalContext.current;val p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);var name by remember{mutableStateOf(p.getString("name","")?:"")};var mobile by remember{mutableStateOf(p.getString("mobile","")?:"")};var email by remember{mutableStateOf(p.getString("email","")?:"")};var city by remember{mutableStateOf(p.getString("city","")?:"")};var msg by remember{mutableStateOf("")};Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){Text("Profile",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);OutlinedTextField(name,{name=it},label={Text("Name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(mobile,{mobile=it},label={Text("Mobile")},modifier=Modifier.fillMaxWidth());OutlinedTextField(email,{email=it},label={Text("Email")},modifier=Modifier.fillMaxWidth());OutlinedTextField(city,{city=it},label={Text("City")},modifier=Modifier.fillMaxWidth());Spacer(Modifier.height(10.dp));Button(onClick={p.edit().putString("name",name).putString("mobile",mobile).putString("email",email).putString("city",city).apply();msg="Profile saved."},modifier=Modifier.fillMaxWidth()){Text("Save Profile")};if(msg.isNotBlank())Text(msg)}}
 
-        if (service.title == "Astrology") {
-            Spacer(Modifier.height(12.dp))
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                Column(Modifier.padding(14.dp)) {
-                    Text("Personal Astrology Details", fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(dob, { dob = it }, label = { Text("Date of birth YYYY-MM-DD") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(birthTime, { birthTime = it }, label = { Text("Birth time HH:MM") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(birthPlace, { birthPlace = it }, label = { Text("Birth place") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick = {
-                        if (dob.isBlank() || birthTime.isBlank() || birthPlace.isBlank()) {
-                            astrologyMessage = "Please fill all birth details."
-                        } else {
-                            astrologyMessage = "Submitting online..."
-                            val payload = JSONObject().put("date_of_birth", dob).put("birth_time", birthTime).put("birth_place", birthPlace).put("request_type", "kundli")
-                            postJson("astrology_requests", payload) { astrologyMessage = if (it) "Astrology request submitted online successfully." else "Online submission failed. Please check internet and try again." }
-                        }
-                    }, modifier = Modifier.fillMaxWidth()) { Text("Submit Astrology Request") }
-                    if (astrologyMessage.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(astrologyMessage, style = MaterialTheme.typography.bodySmall) }
-                }
-            }
-        }
-
-        if (service.title == "Online Shopping") {
-            Spacer(Modifier.height(12.dp))
-            Text("Online Products", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            if (loadingProducts) CircularProgressIndicator() else if (products.isEmpty()) Text("Could not load online products.") else products.forEach { product ->
-                Card(Modifier.fillMaxWidth().padding(vertical = 6.dp), shape = RoundedCornerShape(14.dp)) {
-                    Column(Modifier.padding(14.dp)) {
-                        Text(product.name, fontWeight = FontWeight.Bold)
-                        Text(product.description, style = MaterialTheme.typography.bodySmall)
-                        Spacer(Modifier.height(4.dp))
-                        Text(product.price, fontWeight = FontWeight.Bold)
-                        product.url?.let { url -> Spacer(Modifier.height(8.dp)); Button(onClick = { openWeb(context, url) }) { Text("Open") } }
-                    }
-                }
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-        Button(onClick = onBook, modifier = Modifier.fillMaxWidth()) { Text("Request Booking / Quotation") }
+@Composable fun AdminScreen() {
+    var email by remember{mutableStateOf("")};var password by remember{mutableStateOf("")};var token by remember{mutableStateOf<String?>(null)};var msg by remember{mutableStateOf("")};var loading by remember{mutableStateOf(false)};var data by remember{mutableStateOf<AdminData?>(null)}
+    var productName by remember{mutableStateOf("")};var category by remember{mutableStateOf("Astrology Products")};var price by remember{mutableStateOf("0")};var description by remember{mutableStateOf("")}
+    fun refresh(){val t=token?:return;loading=true;fetchAdminData(t){d,m->loading=false;data=d;msg=m}}
+    fun update(path:String,status:String){val t=token?:return;loading=true;adminWrite(t,path,"PATCH",JSONObject().put("status",status)){ok->loading=false;msg=if(ok)"Status updated." else "Update failed.";if(ok)refresh()}}
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){
+        Text("🔐 Rawalworld Admin",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold);Text("Secure management dashboard",style=MaterialTheme.typography.bodySmall);Spacer(Modifier.height(14.dp))
+        if(token==null){Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(16.dp)){Column(Modifier.padding(16.dp)){Text("Admin Login",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);OutlinedTextField(email,{email=it},label={Text("Admin email")},modifier=Modifier.fillMaxWidth());OutlinedTextField(password,{password=it},label={Text("Password")},modifier=Modifier.fillMaxWidth());Spacer(Modifier.height(10.dp));Button(enabled=!loading,onClick={if(email.isBlank()||password.isBlank())msg="Enter admin email and password." else{loading=true;adminLogin(email.trim(),password){t,m->loading=false;token=t;msg=m;if(t!=null){loading=true;fetchAdminData(t){d,dm->loading=false;data=d;msg=dm}}}}},modifier=Modifier.fillMaxWidth()){Text(if(loading)"Please wait..." else "Login")};if(msg.isNotBlank())Text(msg,style=MaterialTheme.typography.bodySmall)}}}
+        else{val d=data;if(loading)CircularProgressIndicator();if(d!=null){LazyVerticalGrid(columns=GridCells.Fixed(2),modifier=Modifier.height(190.dp),verticalArrangement=Arrangement.spacedBy(8.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){item{AdminCountCard("Bookings",d.bookings.size,"📅")};item{AdminCountCard("Astrology",d.astrology.size,"🔮")};item{AdminCountCard("Products",d.productCount,"🛍️")};item{AdminCountCard("Orders",d.orders.size,"📦")}}
+            Text("Booking Management",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);d.bookings.forEach{b->Card(Modifier.fillMaxWidth().padding(vertical=5.dp)){Column(Modifier.padding(12.dp)){Text(b.service,fontWeight=FontWeight.Bold);Text("${b.name} • ${b.mobile} • ${b.city}",style=MaterialTheme.typography.bodySmall);Text("Status: ${b.status}");Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){TextButton(onClick={update("bookings?id=eq.${b.id}","contacted")}){Text("Contacted")};TextButton(onClick={update("bookings?id=eq.${b.id}","confirmed")}){Text("Confirmed")};TextButton(onClick={update("bookings?id=eq.${b.id}","completed")}){Text("Complete")}}}}}
+            Spacer(Modifier.height(8.dp));Text("Astrology Management",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);d.astrology.forEach{a->Card(Modifier.fillMaxWidth().padding(vertical=5.dp)){Column(Modifier.padding(12.dp)){Text(a.type,fontWeight=FontWeight.Bold);Text("${a.name} • ${a.mobile} • ${a.place}",style=MaterialTheme.typography.bodySmall);Text("Status: ${a.status}");Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){TextButton(onClick={update("astrology_requests?id=eq.${a.id}","reviewing")}){Text("Reviewing")};TextButton(onClick={update("astrology_requests?id=eq.${a.id}","completed")}){Text("Complete")}}}}}
+            Spacer(Modifier.height(8.dp));Text("Product Management",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp)){OutlinedTextField(productName,{productName=it},label={Text("Product name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(category,{category=it},label={Text("Category")},modifier=Modifier.fillMaxWidth());OutlinedTextField(price,{price=it},label={Text("Price")},modifier=Modifier.fillMaxWidth());OutlinedTextField(description,{description=it},label={Text("Description")},modifier=Modifier.fillMaxWidth());Button(onClick={val t=token?:return@Button;if(productName.isBlank()){msg="Enter product name."}else{loading=true;val amount=price.toDoubleOrNull()?:0.0;val j=JSONObject().put("name",productName.trim()).put("category",category.trim()).put("description",description.trim()).put("price",amount).put("currency","INR").put("is_free",amount==0.0).put("is_active",true);adminWrite(t,"products","POST",j){ok->loading=false;msg=if(ok)"Product added." else "Could not add product.";if(ok){productName="";description="";refresh()}}}},modifier=Modifier.fillMaxWidth()){Text("Add Product")}}}
+            Spacer(Modifier.height(8.dp));Text("Order Management",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);if(d.orders.isEmpty())Text("No orders yet.") else d.orders.forEach{o->Card(Modifier.fillMaxWidth().padding(vertical=5.dp)){Column(Modifier.padding(12.dp)){Text(o.name.ifBlank{"Order"},fontWeight=FontWeight.Bold);Text("${o.mobile} • ${o.amount}",style=MaterialTheme.typography.bodySmall);Text("Status: ${o.status}");Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){TextButton(onClick={val t=token?:return@TextButton;loading=true;adminWrite(t,"orders?id=eq.${o.id}","PATCH",JSONObject().put("order_status","processing")){ok->loading=false;msg=if(ok)"Order updated." else "Update failed.";if(ok)refresh()}}){Text("Processing")};TextButton(onClick={val t=token?:return@TextButton;loading=true;adminWrite(t,"orders?id=eq.${o.id}","PATCH",JSONObject().put("order_status","delivered")){ok->loading=false;msg=if(ok)"Order delivered." else "Update failed.";if(ok)refresh()}}){Text("Delivered")}}}}}
+        };Spacer(Modifier.height(10.dp));Button(onClick={refresh()},enabled=!loading,modifier=Modifier.fillMaxWidth()){Text("Refresh Dashboard")};OutlinedButton(onClick={token=null;data=null;password="";msg="Logged out."},modifier=Modifier.fillMaxWidth()){Text("Logout")};if(msg.isNotBlank())Text(msg,style=MaterialTheme.typography.bodySmall)}
     }
 }
 
-@Composable
-fun BookingScreen(service: Service, onBack: () -> Unit, onSaved: (Booking) -> Unit) {
-    val prefs = LocalContext.current.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-    var name by remember { mutableStateOf(prefs.getString("name", "") ?: "") }
-    var mobile by remember { mutableStateOf(prefs.getString("mobile", "") ?: "") }
-    var city by remember { mutableStateOf(prefs.getString("city", "") ?: "") }
-    var date by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-    var submitting by remember { mutableStateOf(false) }
-
-    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
-        TextButton(onClick = onBack) { Text("← Back") }
-        Text("Booking / Quotation", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text(service.title)
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(mobile, { mobile = it }, label = { Text("Mobile") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(city, { city = it }, label = { Text("City") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(date, { date = it }, label = { Text("Preferred date YYYY-MM-DD (optional)") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(note, { note = it }, label = { Text("Requirement") }, minLines = 3, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(10.dp))
-        Button(enabled = !submitting, onClick = {
-            if (name.isBlank() || mobile.isBlank() || city.isBlank()) {
-                message = "Please enter name, mobile and city."
-            } else {
-                val booking = Booking(service.title, name.trim(), mobile.trim(), city.trim(), date.trim(), note.trim())
-                onSaved(booking)
-                submitting = true
-                message = "Submitting online..."
-                val payload = JSONObject().put("service", booking.service).put("customer_name", booking.name).put("mobile", booking.mobile).put("city", booking.city).put("source", "android")
-                if (Regex("\\d{4}-\\d{2}-\\d{2}").matches(booking.date)) payload.put("preferred_date", booking.date)
-                if (booking.note.isNotBlank()) payload.put("requirement", booking.note)
-                postJson("bookings", payload) { success ->
-                    submitting = false
-                    message = if (success) "✅ Request submitted online successfully." else "⚠️ Saved on phone, but online submission failed."
-                }
-            }
-        }, modifier = Modifier.fillMaxWidth()) { Text(if (submitting) "Submitting..." else "Submit Request") }
-        if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message) }
-    }
-}
-
-@Composable
-fun BookingsScreen(items: List<Booking>) {
-    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
-        Text("My Bookings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(12.dp))
-        if (items.isEmpty()) Text("No booking requests yet.")
-        items.asReversed().forEach { booking ->
-            Card(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                Column(Modifier.padding(12.dp)) {
-                    Text(booking.service, fontWeight = FontWeight.Bold)
-                    Text("${booking.name} • ${booking.mobile} • ${booking.city}", style = MaterialTheme.typography.bodySmall)
-                    if (booking.date.isNotBlank()) Text("Date: ${booking.date}", style = MaterialTheme.typography.bodySmall)
-                    if (booking.note.isNotBlank()) Text(booking.note, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ProfileScreen() {
-    val context = LocalContext.current
-    val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-    var name by remember { mutableStateOf(prefs.getString("name", "") ?: "") }
-    var mobile by remember { mutableStateOf(prefs.getString("mobile", "") ?: "") }
-    var email by remember { mutableStateOf(prefs.getString("email", "") ?: "") }
-    var city by remember { mutableStateOf(prefs.getString("city", "") ?: "") }
-    var message by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
-        Text("Profile", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(mobile, { mobile = it }, label = { Text("Mobile") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(city, { city = it }, label = { Text("City") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(10.dp))
-        Button(onClick = { prefs.edit().putString("name", name).putString("mobile", mobile).putString("email", email).putString("city", city).apply(); message = "Profile saved." }, modifier = Modifier.fillMaxWidth()) { Text("Save Profile") }
-        if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message) }
-    }
-}
-
-@Composable
-fun AdminScreen() {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var token by remember { mutableStateOf<String?>(null) }
-    var message by remember { mutableStateOf("") }
-    var loading by remember { mutableStateOf(false) }
-    var data by remember { mutableStateOf<AdminData?>(null) }
-
-    fun refreshAdmin() {
-        val t = token ?: return
-        loading = true
-        message = "Loading dashboard..."
-        fetchAdminData(t) { result, msg ->
-            loading = false
-            data = result
-            message = msg
-        }
-    }
-
-    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
-        Text("🔐 Rawalworld Admin", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
-        Text("Secure bookings and customer management", style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(16.dp))
-
-        if (token == null) {
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Admin Login", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedTextField(email, { email = it }, label = { Text("Admin email") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(password, { password = it }, label = { Text("Password") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(10.dp))
-                    Button(enabled = !loading, onClick = {
-                        if (email.isBlank() || password.isBlank()) {
-                            message = "Enter admin email and password."
-                        } else {
-                            loading = true
-                            message = "Signing in..."
-                            adminLogin(email.trim(), password) { newToken, msg ->
-                                loading = false
-                                token = newToken
-                                message = msg
-                                if (newToken != null) {
-                                    loading = true
-                                    fetchAdminData(newToken) { result, dashboardMsg ->
-                                        loading = false
-                                        data = result
-                                        message = dashboardMsg
-                                    }
-                                }
-                            }
-                        }
-                    }, modifier = Modifier.fillMaxWidth()) { Text(if (loading) "Please wait..." else "Login") }
-                    if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message, style = MaterialTheme.typography.bodySmall) }
-                }
-            }
-        } else {
-            val d = data
-            if (loading) CircularProgressIndicator()
-            if (d != null) {
-                Spacer(Modifier.height(8.dp))
-                LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.height(190.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item { AdminCountCard("Bookings", d.bookingCount, "📅") }
-                    item { AdminCountCard("Astrology", d.astrologyCount, "🔮") }
-                    item { AdminCountCard("Products", d.productCount, "🛍️") }
-                    item { AdminCountCard("Orders", d.orderCount, "📦") }
-                }
-                Text("Recent Bookings", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                if (d.bookingLines.isEmpty()) Text("No bookings yet.") else d.bookingLines.forEach { line ->
-                    Card(Modifier.fillMaxWidth().padding(bottom = 8.dp)) { Text(line, Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall) }
-                }
-                Spacer(Modifier.height(8.dp))
-                Text("Recent Astrology Requests", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                if (d.astrologyLines.isEmpty()) Text("No astrology requests yet.") else d.astrologyLines.forEach { line ->
-                    Card(Modifier.fillMaxWidth().padding(bottom = 8.dp)) { Text(line, Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall) }
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            Button(onClick = { refreshAdmin() }, enabled = !loading, modifier = Modifier.fillMaxWidth()) { Text("Refresh Dashboard") }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = { token = null; data = null; password = ""; message = "Logged out." }, modifier = Modifier.fillMaxWidth()) { Text("Logout") }
-            if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message, style = MaterialTheme.typography.bodySmall) }
-        }
-    }
-}
-
-@Composable
-fun AdminCountCard(label: String, count: Int, icon: String) {
-    Card(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Column { Text(count.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(label, style = MaterialTheme.typography.bodySmall) }
-            Text(icon, style = MaterialTheme.typography.headlineMedium)
-        }
-    }
-}
+@Composable fun AdminCountCard(label:String,count:Int,icon:String){Card(Modifier.fillMaxWidth()){Row(Modifier.fillMaxWidth().padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){Column{Text(count.toString(),style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold);Text(label,style=MaterialTheme.typography.bodySmall)};Text(icon,style=MaterialTheme.typography.headlineMedium)}}}
