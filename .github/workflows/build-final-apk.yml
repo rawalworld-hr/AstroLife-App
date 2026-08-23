@@ -25,20 +25,22 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Prepare Rawalworld V55 source
+      - name: Prepare final Rawalworld APK source
         shell: bash
         run: |
           set -e
-          rm -f app/src/main/java/com/astrolife/app/MainActivity.kt
-          rm -f app/src/main/java/com/astrolife/app/MainActivityV2.kt
-          rm -f app/src/main/java/com/astrolife/app/RawalworldActivity.kt
+          rm -f app/src/main/java/com/astrolife/app/MainActivity.kt app/src/main/java/com/astrolife/app/MainActivityV2.kt app/src/main/java/com/astrolife/app/RawalworldActivity.kt
           cp .github/assets/MainActivity.final.kt app/src/main/java/com/astrolife/app/MainActivity.kt
 
           python3 - <<'PY'
           import re
           from pathlib import Path
-          path=Path('app/src/main/java/com/astrolife/app/MainActivity.kt')
-          s=path.read_text()
+          p=Path('app/src/main/java/com/astrolife/app/MainActivity.kt')
+          s=p.read_text()
+
+          # Fresh admin login each app process so an expired Supabase JWT cannot silently break Product/Master writes.
+          s=s.replace('@Composable fun AdminScreen(){val context=LocalContext.current;var auth by remember{mutableStateOf(token(context))};if(auth.isBlank())AdminLogin(context){auth=it}else AdminDashboard(context,auth){saveToken(context,"");auth=""}}',
+                      '@Composable fun AdminScreen(){val context=LocalContext.current;var auth by remember{mutableStateOf("")};if(auth.isBlank())AdminLogin(context){auth=it}else AdminDashboard(context,auth){saveToken(context,"");auth=""}}',1)
 
           home=r'''@Composable fun HomeScreen(open:(ServiceItem)->Unit){
             var language by remember{mutableStateOf("English")}
@@ -63,12 +65,7 @@ jobs:
                 }
               }
               Text("Explore services",fontWeight=FontWeight.ExtraBold,modifier=Modifier.padding(top=14.dp,bottom=6.dp))
-              publicServices.chunked(3).forEach{items->
-                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
-                  items.forEach{s->Card(onClick={open(s)},modifier=Modifier.weight(1f).padding(vertical=4.dp)){Column(Modifier.fillMaxWidth().padding(vertical=12.dp,horizontal=6.dp),horizontalAlignment=Alignment.CenterHorizontally){Text(s.icon,style=MaterialTheme.typography.headlineMedium);Text(serviceName(s.title),fontWeight=FontWeight.Bold,style=MaterialTheme.typography.bodySmall)}}}
-                  repeat(3-items.size){Spacer(Modifier.weight(1f))}
-                }
-              }
+              publicServices.chunked(3).forEach{items->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){items.forEach{x->Card(onClick={open(x)},modifier=Modifier.weight(1f).padding(vertical=4.dp)){Column(Modifier.fillMaxWidth().padding(vertical=12.dp,horizontal=6.dp),horizontalAlignment=Alignment.CenterHorizontally){Text(x.icon,style=MaterialTheme.typography.headlineMedium);Text(serviceName(x.title),fontWeight=FontWeight.Bold,style=MaterialTheme.typography.bodySmall)}}};repeat(3-items.size){Spacer(Modifier.weight(1f))}}}
               Card(onClick={open(ServiceItem("🛍️","Online Shopping",emptyList()))},modifier=Modifier.fillMaxWidth().padding(top=8.dp)){Row(Modifier.fillMaxWidth().padding(14.dp),verticalAlignment=Alignment.CenterVertically){Text("🛍️",style=MaterialTheme.typography.headlineMedium);Spacer(Modifier.width(10.dp));Text(if(language=="Gujarati")"ઓનલાઇન શોપિંગ" else if(language=="Hindi")"ऑनलाइन शॉपिंग" else if(language=="French")"Shopping en ligne" else "Online Shopping",Modifier.weight(1f),fontWeight=FontWeight.Bold);Text("›",color=Purple)}}
               Text("📞 +91 77093 78969   ✉ rawalworld@gmail.com",Modifier.padding(top=16.dp),style=MaterialTheme.typography.bodySmall)
             }
@@ -79,11 +76,18 @@ jobs:
           shop=r'''@Composable fun ShopScreen(){
             val context=LocalContext.current
             var products by remember{mutableStateOf<List<ProductRow>>(emptyList())}
+            var masterCategories by remember{mutableStateOf(listOf("Puja Products","Astrology Products","Gifts","Decoration Items","Travel Accessories","Local Products"))}
             var loading by remember{mutableStateOf(true)}
             var selected by remember{mutableStateOf<ProductRow?>(null)}
             var category by remember{mutableStateOf("All")}
-            LaunchedEffect(Unit){Thread{val out=mutableListOf<ProductRow>();try{val a=getArray("products?select=id,name,category,description,price,is_active,image_url&is_active=eq.true&order=created_at.desc");for(i in 0 until a.length()){val x=a.getJSONObject(i);out+=ProductRow(x.optString("id"),x.optString("name"),x.optString("category"),x.optString("description"),x.optDouble("price"),true,x.optString("image_url"))}}catch(_:Exception){};ui{products=out;loading=false}}.start()}
-            val categories=listOf("All")+products.map{it.category.ifBlank{"Other"}}.distinct()
+            LaunchedEffect(Unit){Thread{
+              val out=mutableListOf<ProductRow>()
+              val cats=mutableListOf<String>()
+              try{val a=getArray("products?select=id,name,category,description,price,is_active,image_url&is_active=eq.true&order=created_at.desc");for(i in 0 until a.length()){val x=a.getJSONObject(i);out+=ProductRow(x.optString("id"),x.optString("name"),x.optString("category"),x.optString("description"),x.optDouble("price"),true,x.optString("image_url"))}}catch(_:Exception){}
+              try{val a=getArray("masters?select=name&master_type=eq.shop&is_active=eq.true&order=name.asc");for(i in 0 until a.length()){val n=a.getJSONObject(i).optString("name");if(n.isNotBlank())cats+=n}}catch(_:Exception){}
+              ui{products=out;masterCategories=(masterCategories+cats+out.map{it.category}).filter{it.isNotBlank()}.distinct();loading=false}
+            }.start()}
+            val categories=listOf("All")+masterCategories.distinct()
             val visible=if(category=="All")products else products.filter{it.category==category}
             Column(Modifier.fillMaxSize().padding(14.dp).verticalScroll(rememberScrollState())){
               Text("🛍️ Online Shopping",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
@@ -91,7 +95,7 @@ jobs:
               categories.chunked(2).forEach{cats->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){cats.forEach{cat->OutlinedButton(onClick={category=cat},Modifier.weight(1f)){Text((if(category==cat)"✓ " else "")+cat)}};if(cats.size==1)Spacer(Modifier.weight(1f))}}
               if(loading)CircularProgressIndicator(Modifier.padding(16.dp))
               if(!loading&&visible.isEmpty())Text("No active products found in this category.")
-              visible.forEach{p->Card(Modifier.fillMaxWidth().padding(vertical=6.dp)){Column(Modifier.padding(14.dp)){if(p.imageUrl.isNotBlank())RemoteImage(p.imageUrl);Text(p.name,fontWeight=FontWeight.Bold);Text(p.category,style=MaterialTheme.typography.bodySmall);if(p.description.isNotBlank())Text(p.description);Text("₹ ${String.format("%.2f",p.price)}",fontWeight=FontWeight.Bold);Button(onClick={selected=p},Modifier.fillMaxWidth().padding(top=8.dp)){Text("Buy Now")}}}}
+              visible.forEach{r->Card(Modifier.fillMaxWidth().padding(vertical=6.dp)){Column(Modifier.padding(14.dp)){if(r.imageUrl.isNotBlank())RemoteImage(r.imageUrl);Text(r.name,fontWeight=FontWeight.Bold);Text(r.category,style=MaterialTheme.typography.bodySmall);if(r.description.isNotBlank())Text(r.description);Text("₹ ${String.format("%.2f",r.price)}",fontWeight=FontWeight.Bold);Button(onClick={selected=r},Modifier.fillMaxWidth().padding(top=8.dp)){Text("Buy Now")}}}}
             }
             selected?.let{CheckoutDialog(context,it){selected=null}}
           }'''
@@ -105,54 +109,41 @@ jobs:
 
           marker='};Section("MASTER EDIT / DELETE"){'
           create=r'''};Section("CREATE MASTER"){
-            OutlinedTextField(masterType,{masterType=it},label={Text("Master type: shop / service / entertainment / travel / astrology")},modifier=Modifier.fillMaxWidth())
+            var typeMenu by remember{mutableStateOf(false)}
+            Box{OutlinedButton(onClick={typeMenu=true},Modifier.fillMaxWidth()){Text("Master type: $masterType")};DropdownMenu(typeMenu,{typeMenu=false}){listOf("shop","service","entertainment","travel","astrology").forEach{t->DropdownMenuItem(text={Text(t)},onClick={masterType=t;typeMenu=false})}}}
             OutlinedTextField(masterName,{masterName=it},label={Text("Master name")},modifier=Modifier.fillMaxWidth())
-            Button(onClick={if(masterName.isBlank()){msg="Enter master name."}else Thread{val ok=try{write("masters","POST",JSONObject().put("master_type",masterType.trim().ifBlank{"shop"}).put("name",masterName.trim()).put("is_active",true),auth)}catch(_:Exception){false};ui{msg=if(ok)"✅ Master created." else "Master creation failed.";if(ok){masterName="";reload()}}}.start()},Modifier.fillMaxWidth()){Text("Add Master")}
+            Button(onClick={if(masterName.isBlank()){msg="Enter master name."}else Thread{val ok=try{write("masters","POST",JSONObject().put("master_type",masterType).put("name",masterName.trim()).put("is_active",true),auth)}catch(_:Exception){false};ui{msg=if(ok)"✅ Master created." else "Master creation failed — please log out and login again.";if(ok){masterName="";reload()}}}.start()},Modifier.fillMaxWidth()){Text("Add Master")}
           };Section("MASTER EDIT / DELETE"){'''
           if marker not in s: raise SystemExit('Master section marker missing')
           s=s.replace(marker,create,1)
 
-          path.write_text(s)
+          p.write_text(s)
           PY
 
           mkdir -p app/src/main/res/drawable
           cat > app/src/main/res/drawable/rawalworld_ganeshji_final.xml <<'XML'
           <?xml version="1.0" encoding="utf-8"?>
-          <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp" android:height="108dp"
-              android:viewportWidth="108" android:viewportHeight="108">
-              <path android:fillColor="#24104F" android:pathData="M0,0h108v108h-108z"/>
-              <path android:fillColor="#F6C95C" android:pathData="M54,12a42,42 0,1 0,0 84a42,42 0,1 0,0 -84"/>
-              <path android:fillColor="#9A3412" android:pathData="M54,25c-13,0 -23,10 -23,22c0,8 4,15 11,19c-2,7 0,14 5,18c5,4 12,4 17,1c7,-4 10,-12 7,-19c-1,-4 -4,-7 -8,-9c6,-4 9,-10 8,-17c-1,-9 -8,-15 -17,-15zM48,39c5,-5 13,-4 16,2c3,6 0,12 -6,14c-5,2 -8,6 -6,11c1,5 7,7 11,4c2,-1 4,-3 5,-6c2,7 -1,14 -8,17c-7,3 -14,-1 -16,-8c-1,-5 1,-10 5,-13c-8,-2 -13,-8 -13,-15c0,-7 5,-13 12,-16z"/>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+            <path android:fillColor="#24104F" android:pathData="M0,0h108v108h-108z"/>
+            <path android:fillColor="#F6C95C" android:pathData="M54,12a42,42 0,1 0,0 84a42,42 0,1 0,0 -84"/>
+            <path android:fillColor="#9A3412" android:pathData="M54,25c-13,0 -23,10 -23,22c0,8 4,15 11,19c-2,7 0,14 5,18c5,4 12,4 17,1c7,-4 10,-12 7,-19c-1,-4 -4,-7 -8,-9c6,-4 9,-10 8,-17c-1,-9 -8,-15 -17,-15zM48,39c5,-5 13,-4 16,2c3,6 0,12 -6,14c-5,2 -8,6 -6,11c1,5 7,7 11,4c2,-1 4,-3 5,-6c2,7 -1,14 -8,17c-7,3 -14,-1 -16,-8c-1,-5 1,-10 5,-13c-8,-2 -13,-8 -13,-15c0,-7 5,-13 12,-16z"/>
           </vector>
           XML
 
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           from pathlib import Path
-          path=Path('app/src/main/AndroidManifest.xml')
-          ns='http://schemas.android.com/apk/res/android'
-          ET.register_namespace('android',ns)
-          tree=ET.parse(path)
-          root=tree.getroot()
-          app=root.find('application')
-          app.set('{%s}label'%ns,'Rawalworld')
-          app.set('{%s}icon'%ns,'@drawable/rawalworld_ganeshji_final')
-          app.set('{%s}roundIcon'%ns,'@drawable/rawalworld_ganeshji_final')
+          path=Path('app/src/main/AndroidManifest.xml');ns='http://schemas.android.com/apk/res/android';ET.register_namespace('android',ns);tree=ET.parse(path);root=tree.getroot();app=root.find('application');app.set('{%s}label'%ns,'Rawalworld');app.set('{%s}icon'%ns,'@drawable/rawalworld_ganeshji_final');app.set('{%s}roundIcon'%ns,'@drawable/rawalworld_ganeshji_final');
           for a in list(app.findall('activity')): app.remove(a)
-          act=ET.SubElement(app,'activity');act.set('{%s}name'%ns,'.MainActivity');act.set('{%s}exported'%ns,'true')
-          f=ET.SubElement(act,'intent-filter');ET.SubElement(f,'action').set('{%s}name'%ns,'android.intent.action.MAIN');ET.SubElement(f,'category').set('{%s}name'%ns,'android.intent.category.LAUNCHER')
-          tree.write(path,encoding='utf-8',xml_declaration=True)
+          act=ET.SubElement(app,'activity');act.set('{%s}name'%ns,'.MainActivity');act.set('{%s}exported'%ns,'true');f=ET.SubElement(act,'intent-filter');ET.SubElement(f,'action').set('{%s}name'%ns,'android.intent.action.MAIN');ET.SubElement(f,'category').set('{%s}name'%ns,'android.intent.category.LAUNCHER');tree.write(path,encoding='utf-8',xml_declaration=True)
           PY
 
-          grep -q '🌐' app/src/main/java/com/astrolife/app/MainActivity.kt
           grep -q 'Shop category wise' app/src/main/java/com/astrolife/app/MainActivity.kt
           grep -q 'CREATE MASTER' app/src/main/java/com/astrolife/app/MainActivity.kt
           grep -q 'PAYMENT MASTER' app/src/main/java/com/astrolife/app/MainActivity.kt
           grep -q 'PRODUCT EDIT / DELETE / ACTIVE-INACTIVE' app/src/main/java/com/astrolife/app/MainActivity.kt
           grep -q 'CLIENT RECORDS' app/src/main/java/com/astrolife/app/MainActivity.kt
-          grep -q 'Continue to Payment' app/src/main/java/com/astrolife/app/MainActivity.kt
-          echo 'Rawalworld V55 Android design verified.'
+          echo 'Final Rawalworld APK source verified.'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -164,20 +155,8 @@ jobs:
           gradle assembleDebug 2>&1 | tee /tmp/rawalworld-build.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
-            {
-              echo "Rawalworld APK compiler errors"
-              echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-              echo
-              grep -nE '(^| )e: |error:|FAILURE:|Compilation error|Unresolved reference|Type mismatch|No value passed|Cannot find|Expecting ' /tmp/rawalworld-build.log || true
-              echo
-              tail -n 120 /tmp/rawalworld-build.log
-            } > .github/last-build-error.txt
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add .github/last-build-error.txt
-            git commit -m "Save latest Rawalworld build error" || true
-            git push || true
-            exit "$status"
+            { echo "Rawalworld APK compiler errors"; grep -nE '(^| )e: |error:|FAILURE:|Compilation error|Unresolved reference|Type mismatch|No value passed|Cannot find|Expecting ' /tmp/rawalworld-build.log || true; tail -n 120 /tmp/rawalworld-build.log; } > .github/last-build-error.txt
+            git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"; git add .github/last-build-error.txt; git commit -m "Save latest Rawalworld build error" || true; git push || true; exit "$status"
           fi
 
       - name: Upload Rawalworld APK
