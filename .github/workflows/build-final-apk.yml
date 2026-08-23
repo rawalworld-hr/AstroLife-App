@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/assets/MainActivity.final.kt'
       - '.github/scripts/sync_v120.py'
+      - '.github/scripts/fix_v120_compile.py'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
 
@@ -61,6 +62,7 @@ jobs:
           PY
 
           python3 .github/scripts/sync_v120.py
+          python3 .github/scripts/fix_v120_compile.py
 
           mkdir -p app/src/main/res/drawable
           cat > app/src/main/res/drawable/rawalworld_ganeshji_final.xml <<'XML'
