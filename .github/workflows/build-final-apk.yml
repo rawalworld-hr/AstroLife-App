@@ -5,21 +5,7 @@ on:
   push:
     branches: [ main, master ]
     paths:
-      - '.github/assets/MainActivity.v2.kt'
-      - '.github/assets/fix_service_contacts_v2.py'
-      - '.github/assets/fix_admin_dashboard_v2.py'
-      - '.github/assets/fix_travel_v2.py'
-      - '.github/assets/sync_remaining_features_v3.py'
-      - '.github/assets/fix_complete_v5.py'
-      - '.github/assets/fix_orders_masters_v6.py'
-      - '.github/assets/fix_clients_news_products_v7.py'
-      - '.github/assets/fix_edit_controls_v8.py'
-      - '.github/assets/fix_offline_entertainment_v9.py'
-      - '.github/assets/fix_direct_open_v10.py'
-      - '.github/assets/fix_cricket_map_admin_v11.py'
-      - '.github/assets/fix_live_astrology_v12.py'
-      - '.github/assets/fix_payment_settings_v13.py'
-      - '.github/assets/fix_admin_tools_v14.py'
+      - '.github/assets/MainActivity.final.kt'
       - '.github/assets/rawalworld_logo.b64'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
@@ -40,34 +26,26 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Prepare final Rawalworld source and Ganeshji icon
+      - name: Prepare single final Rawalworld source
         shell: bash
         run: |
           set -e
           rm -f app/src/main/java/com/astrolife/app/MainActivity.kt
-          rm -f app/src/main/java/com/astrolife/app/RawalworldActivity.kt
           rm -f app/src/main/java/com/astrolife/app/MainActivityV2.kt
-          cp .github/assets/MainActivity.v2.kt app/src/main/java/com/astrolife/app/MainActivityV2.kt
-          python3 .github/assets/fix_service_contacts_v2.py
-          python3 .github/assets/fix_admin_dashboard_v2.py
-          python3 .github/assets/fix_travel_v2.py
-          python3 .github/assets/sync_remaining_features_v3.py
-          python3 .github/assets/fix_complete_v5.py
-          python3 .github/assets/fix_orders_masters_v6.py
-          python3 .github/assets/fix_clients_news_products_v7.py
-          python3 .github/assets/fix_edit_controls_v8.py
-          python3 .github/assets/fix_offline_entertainment_v9.py
-          python3 .github/assets/fix_direct_open_v10.py
-          python3 .github/assets/fix_cricket_map_admin_v11.py
-          python3 .github/assets/fix_live_astrology_v12.py
-          python3 .github/assets/fix_payment_settings_v13.py
-          python3 .github/assets/fix_admin_tools_v14.py
+          rm -f app/src/main/java/com/astrolife/app/RawalworldActivity.kt
+          cp .github/assets/MainActivity.final.kt app/src/main/java/com/astrolife/app/MainActivity.kt
 
           mkdir -p app/src/main/res/drawable
-          rm -f app/src/main/res/drawable/rawalworld_logo.jpg
-          rm -f app/src/main/res/drawable/rawalworld_ganeshji_final.jpg
           base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_ganeshji_final.jpg
-          test -s app/src/main/res/drawable/rawalworld_ganeshji_final.jpg
+          cat > app/src/main/res/drawable/rawalworld_launcher.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <inset xmlns:android="http://schemas.android.com/apk/res/android"
+              android:drawable="@drawable/rawalworld_ganeshji_final"
+              android:insetLeft="12%"
+              android:insetTop="12%"
+              android:insetRight="12%"
+              android:insetBottom="12%" />
+          XML
 
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
@@ -79,12 +57,12 @@ jobs:
           root=tree.getroot()
           app=root.find('application')
           app.set('{%s}label'%ns,'Rawalworld')
-          app.set('{%s}icon'%ns,'@drawable/rawalworld_ganeshji_final')
-          app.set('{%s}roundIcon'%ns,'@drawable/rawalworld_ganeshji_final')
+          app.set('{%s}icon'%ns,'@drawable/rawalworld_launcher')
+          app.set('{%s}roundIcon'%ns,'@drawable/rawalworld_launcher')
           for a in list(app.findall('activity')):
               app.remove(a)
           act=ET.SubElement(app,'activity')
-          act.set('{%s}name'%ns,'.MainActivityV2')
+          act.set('{%s}name'%ns,'.MainActivity')
           act.set('{%s}exported'%ns,'true')
           f=ET.SubElement(act,'intent-filter')
           ET.SubElement(f,'action').set('{%s}name'%ns,'android.intent.action.MAIN')
@@ -92,17 +70,17 @@ jobs:
           tree.write(path,encoding='utf-8',xml_declaration=True)
           PY
 
-          echo 'Final source prepared.'
-          grep -n 'PAYMENT MASTER' app/src/main/java/com/astrolife/app/MainActivityV2.kt || true
-          grep -n 'PRODUCT EDIT / ACTIVE / DELETE' app/src/main/java/com/astrolife/app/MainActivityV2.kt || true
-          grep -n 'MASTER EDIT / ACTIVE / DELETE' app/src/main/java/com/astrolife/app/MainActivityV2.kt || true
-          grep -n 'CLIENT RECORDS' app/src/main/java/com/astrolife/app/MainActivityV2.kt || true
+          grep -q 'PAYMENT MASTER' app/src/main/java/com/astrolife/app/MainActivity.kt
+          grep -q 'PRODUCT EDIT / DELETE / ACTIVE-INACTIVE' app/src/main/java/com/astrolife/app/MainActivity.kt
+          grep -q 'MASTER EDIT / DELETE' app/src/main/java/com/astrolife/app/MainActivity.kt
+          grep -q 'CLIENT RECORDS' app/src/main/java/com/astrolife/app/MainActivity.kt
+          grep -q 'Continue to Payment' app/src/main/java/com/astrolife/app/MainActivity.kt
+          echo 'Single final Rawalworld source verified.'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build APK
-        id: apkbuild
         shell: bash
         run: |
           set +e
@@ -115,8 +93,7 @@ jobs:
               echo
               grep -nE '(^| )e: |error:|FAILURE:|Compilation error|Unresolved reference|Type mismatch|No value passed|Cannot find|Expecting ' /tmp/rawalworld-build.log || true
               echo
-              echo "--- Tail ---"
-              tail -n 80 /tmp/rawalworld-build.log
+              tail -n 100 /tmp/rawalworld-build.log
             } > .github/last-build-error.txt
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
