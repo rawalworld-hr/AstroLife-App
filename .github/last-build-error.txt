@@ -1,15 +1,12 @@
 Rawalworld APK compiler errors
-Generated: 2026-08-23T09:34:47Z
+Generated: 2026-08-23T09:37:39Z
 
 40:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:947 Unresolved reference 'ShopV2'.
 41:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:967 Unresolved reference 'GalleryV2'.
 42:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:990 Unresolved reference 'ProfileV2'.
-43:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:346 Cannot infer type for this parameter. Please specify it explicitly.
-44:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:349 Cannot infer type for this parameter. Please specify it explicitly.
-45:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:350 Unresolved reference 'RemoteImageV2'.
-46:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:243:220 Unresolved reference 'RemoteImageV2'.
-53:FAILURE: Build failed with an exception.
-58:   > Compilation error. See log for more details
+43:e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:422:29 Unresolved reference 'RemoteImageV2'.
+48:FAILURE: Build failed with an exception.
+53:   > Compilation error. See log for more details
 
 --- Tail ---
 Starting a Gradle Daemon (subsequent builds will be faster)
@@ -34,33 +31,28 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :app:mergeDebugAssets
 > Task :app:compressDebugAssets
-> Task :app:processDebugManifestForPackage
 > Task :app:desugarDebugFileDependencies
 > Task :app:mergeDebugJniLibFolders
 > Task :app:checkDebugDuplicateClasses
 > Task :app:mergeDebugNativeLibs
+> Task :app:processDebugManifestForPackage
 > Task :app:mergeLibDexDebug
-> Task :app:processDebugResources
 
 > Task :app:stripDebugDebugSymbols
 Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so.
 
+> Task :app:processDebugResources
 > Task :app:validateSigningDebug
 > Task :app:writeDebugAppMetadata
 > Task :app:writeDebugSigningConfigVersions
 > Task :app:mergeExtDexDebug
 
-> Task :app:compileDebugKotlin
+> Task :app:compileDebugKotlin FAILED
 e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:947 Unresolved reference 'ShopV2'.
 e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:967 Unresolved reference 'GalleryV2'.
 e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:167:990 Unresolved reference 'ProfileV2'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:346 Cannot infer type for this parameter. Please specify it explicitly.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:349 Cannot infer type for this parameter. Please specify it explicitly.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:240:350 Unresolved reference 'RemoteImageV2'.
-e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:243:220 Unresolved reference 'RemoteImageV2'.
-
-> Task :app:compileDebugKotlin FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/apkbuild-1787477653824.json
+e: file:///home/runner/work/AstroLife-App/AstroLife-App/app/src/main/java/com/astrolife/app/MainActivityV2.kt:422:29 Unresolved reference 'RemoteImageV2'.
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/apkbuild-1787477825110.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/AstroLife-App/AstroLife-App/build/reports/problems/problems-report.html
 
@@ -83,5 +75,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.7.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 43s
+BUILD FAILED in 45s
 28 actionable tasks: 28 executed
