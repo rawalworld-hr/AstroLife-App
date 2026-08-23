@@ -40,7 +40,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Prepare Rawalworld synced source
+      - name: Prepare final Rawalworld source and Ganeshji icon
         shell: bash
         run: |
           rm -f app/src/main/java/com/astrolife/app/MainActivity.kt
@@ -61,8 +61,13 @@ jobs:
           python3 .github/assets/fix_live_astrology_v12.py
           python3 .github/assets/fix_payment_settings_v13.py
           python3 .github/assets/fix_admin_tools_v14.py
+
           mkdir -p app/src/main/res/drawable
-          base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_logo.jpg
+          rm -f app/src/main/res/drawable/rawalworld_logo.jpg
+          rm -f app/src/main/res/drawable/rawalworld_ganeshji_final.jpg
+          base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_ganeshji_final.jpg
+          test -s app/src/main/res/drawable/rawalworld_ganeshji_final.jpg
+
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           from pathlib import Path
@@ -73,8 +78,8 @@ jobs:
           root=tree.getroot()
           app=root.find('application')
           app.set('{%s}label'%ns,'Rawalworld')
-          app.set('{%s}icon'%ns,'@drawable/rawalworld_logo')
-          app.set('{%s}roundIcon'%ns,'@drawable/rawalworld_logo')
+          app.set('{%s}icon'%ns,'@drawable/rawalworld_ganeshji_final')
+          app.set('{%s}roundIcon'%ns,'@drawable/rawalworld_ganeshji_final')
           for a in list(app.findall('activity')):
               app.remove(a)
           act=ET.SubElement(app,'activity')
@@ -85,6 +90,12 @@ jobs:
           ET.SubElement(f,'category').set('{%s}name'%ns,'android.intent.category.LAUNCHER')
           tree.write(path,encoding='utf-8',xml_declaration=True)
           PY
+
+          grep -q 'AdminToolsV14(session)' app/src/main/java/com/astrolife/app/MainActivityV2.kt
+          grep -q 'PAYMENT MASTER' app/src/main/java/com/astrolife/app/MainActivityV2.kt
+          grep -q 'PRODUCT EDIT / ACTIVE / DELETE' app/src/main/java/com/astrolife/app/MainActivityV2.kt
+          grep -q 'MASTER EDIT / ACTIVE / DELETE' app/src/main/java/com/astrolife/app/MainActivityV2.kt
+          grep -q 'CLIENT RECORDS' app/src/main/java/com/astrolife/app/MainActivityV2.kt
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
