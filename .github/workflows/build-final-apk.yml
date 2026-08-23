@@ -13,6 +13,7 @@ on:
       - '.github/assets/fix_complete_v5.py'
       - '.github/assets/fix_orders_masters_v6.py'
       - '.github/assets/fix_clients_news_products_v7.py'
+      - '.github/assets/fix_edit_controls_v8.py'
       - '.github/assets/rawalworld_logo.b64'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
@@ -47,6 +48,7 @@ jobs:
           python3 .github/assets/fix_complete_v5.py
           python3 .github/assets/fix_orders_masters_v6.py
           python3 .github/assets/fix_clients_news_products_v7.py
+          python3 .github/assets/fix_edit_controls_v8.py
           mkdir -p app/src/main/res/drawable
           base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_logo.jpg
           python3 - <<'PY'
