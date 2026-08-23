@@ -35,33 +35,13 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class Service(
-    val icon: String,
-    val title: String,
-    val subtitle: String,
-    val options: List<String>
-)
-
-data class Booking(
-    val service: String,
-    val name: String,
-    val mobile: String,
-    val city: String,
-    val date: String,
-    val note: String
-)
-
-data class Product(
-    val name: String,
-    val description: String,
-    val price: String,
-    val url: String?
-)
+data class Service(val icon: String, val title: String, val subtitle: String, val options: List<String>)
+data class Booking(val service: String, val name: String, val mobile: String, val city: String, val date: String, val note: String)
+data class Product(val name: String, val description: String, val price: String, val url: String?)
 
 private const val SUPABASE_URL = "https://hcpvuripnlhofxfczyyb.supabase.co"
 private const val SUPABASE_KEY = "sb_publishable_J8YoD4yenQO-nlEMoC1kvA_3_vJgGjg"
 private const val PREFS = "rawalworld_prefs"
-
 private val Brand = Color(0xFF8F3D2B)
 private val Hero = Color(0xFF7D2D1F)
 private val WarmBg = Color(0xFFFFF9F5)
@@ -124,13 +104,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    primary = Brand,
-                    surface = Color.White,
-                    background = WarmBg
-                )
-            ) {
+            MaterialTheme(colorScheme = lightColorScheme(primary = Brand, surface = Color.White, background = WarmBg)) {
                 RawalworldApp()
             }
         }
@@ -151,13 +125,8 @@ private fun loadBookings(context: Context): List<Booking> {
 }
 
 private fun saveBookings(context: Context, bookings: List<Booking>) {
-    val raw = bookings.joinToString("\u001e") {
-        listOf(it.service, it.name, it.mobile, it.city, it.date, it.note).joinToString("\u001f")
-    }
-    context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        .edit()
-        .putString("bookings", raw)
-        .apply()
+    val raw = bookings.joinToString("\u001e") { listOf(it.service, it.name, it.mobile, it.city, it.date, it.note).joinToString("\u001f") }
+    context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("bookings", raw).apply()
 }
 
 private fun postJson(table: String, payload: JSONObject, onDone: (Boolean) -> Unit) {
@@ -170,9 +139,7 @@ private fun postJson(table: String, payload: JSONObject, onDone: (Boolean) -> Un
             connection.setRequestProperty("apikey", SUPABASE_KEY)
             connection.setRequestProperty("Prefer", "return=minimal")
             connection.doOutput = true
-            connection.outputStream.use { stream ->
-                stream.write(payload.toString().toByteArray())
-            }
+            connection.outputStream.use { it.write(payload.toString().toByteArray()) }
             success = connection.responseCode in 200..299
             connection.disconnect()
         } catch (_: Exception) {
@@ -193,18 +160,12 @@ private fun fetchProducts(onDone: (List<Product>) -> Unit) {
             for (i in 0 until array.length()) {
                 val item = array.getJSONObject(i)
                 val isFree = item.optBoolean("is_free")
-                val priceText = if (isFree) {
-                    "FREE"
-                } else {
-                    "${item.optString("currency")} ${item.optString("price")}"
-                }
-                val externalUrl = item.optString("external_url").takeIf { it.isNotBlank() }
                 result.add(
                     Product(
                         name = item.optString("name"),
                         description = item.optString("description"),
-                        price = priceText,
-                        url = externalUrl
+                        price = if (isFree) "FREE" else "${item.optString("currency")} ${item.optString("price")}",
+                        url = item.optString("external_url").takeIf { it.isNotBlank() }
                     )
                 )
             }
@@ -222,74 +183,21 @@ fun RawalworldApp() {
     var selectedService by remember { mutableStateOf<Service?>(null) }
     var bookings by remember { mutableStateOf(loadBookings(context)) }
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = screen == "home",
-                    onClick = {
-                        screen = "home"
-                        selectedService = null
-                    },
-                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                    label = { Text("Home") }
-                )
-                NavigationBarItem(
-                    selected = screen == "bookings",
-                    onClick = {
-                        screen = "bookings"
-                        bookings = loadBookings(context)
-                    },
-                    icon = { Icon(Icons.Default.DateRange, contentDescription = null) },
-                    label = { Text("Bookings") }
-                )
-                NavigationBarItem(
-                    selected = screen == "service" && selectedService?.title == "Online Shopping",
-                    onClick = {
-                        selectedService = services.last()
-                        screen = "service"
-                    },
-                    icon = { Icon(Icons.Default.ShoppingCart, contentDescription = null) },
-                    label = { Text("Shop") }
-                )
-                NavigationBarItem(
-                    selected = screen == "profile",
-                    onClick = { screen = "profile" },
-                    icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                    label = { Text("Profile") }
-                )
-            }
+    Scaffold(bottomBar = {
+        NavigationBar {
+            NavigationBarItem(selected = screen == "home", onClick = { screen = "home"; selectedService = null }, icon = { Icon(Icons.Default.Home, null) }, label = { Text("Home") })
+            NavigationBarItem(selected = screen == "bookings", onClick = { screen = "bookings"; bookings = loadBookings(context) }, icon = { Icon(Icons.Default.DateRange, null) }, label = { Text("Bookings") })
+            NavigationBarItem(selected = screen == "service" && selectedService?.title == "Online Shopping", onClick = { selectedService = services.last(); screen = "service" }, icon = { Icon(Icons.Default.ShoppingCart, null) }, label = { Text("Shop") })
+            NavigationBarItem(selected = screen == "profile", onClick = { screen = "profile" }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Profile") })
         }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+    }) { padding ->
+        Box(Modifier.fillMaxSize().padding(padding)) {
             when (screen) {
-                "service" -> selectedService?.let { service ->
-                    ServiceScreen(
-                        service = service,
-                        onBack = { screen = "home" },
-                        onBook = { screen = "booking" }
-                    )
-                }
-                "booking" -> selectedService?.let { service ->
-                    BookingScreen(
-                        service = service,
-                        onBack = { screen = "service" },
-                        onSaved = { booking ->
-                            bookings = bookings + booking
-                            saveBookings(context, bookings)
-                        }
-                    )
-                }
+                "service" -> selectedService?.let { ServiceScreen(it, { screen = "home" }, { screen = "booking" }) }
+                "booking" -> selectedService?.let { service -> BookingScreen(service, { screen = "service" }) { booking -> bookings = bookings + booking; saveBookings(context, bookings) } }
                 "bookings" -> BookingsScreen(bookings)
                 "profile" -> ProfileScreen()
-                else -> HomeScreen { service ->
-                    selectedService = service
-                    screen = "service"
-                }
+                else -> HomeScreen { selectedService = it; screen = "service" }
             }
         }
     }
@@ -298,84 +206,33 @@ fun RawalworldApp() {
 @Composable
 fun HomeScreen(onOpen: (Service) -> Unit) {
     var query by remember { mutableStateOf("") }
-    val filtered = services.filter { service ->
-        query.isBlank() ||
-            service.title.contains(query, ignoreCase = true) ||
-            service.subtitle.contains(query, ignoreCase = true) ||
-            service.options.any { it.contains(query, ignoreCase = true) }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
+    val filtered = services.filter { service -> query.isBlank() || service.title.contains(query, true) || service.subtitle.contains(query, true) || service.options.any { it.contains(query, true) } }
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Spacer(Modifier.height(14.dp))
         Text("Rawalworld", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
         Text("Gujarat lifestyle & services super app", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(14.dp))
-
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Hero),
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(22.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Card(colors = CardDefaults.cardColors(containerColor = Hero), shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(22.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(
-                        "Everything you need,\nin one app.",
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        "Astrology, events, consultancy, travel and shopping.",
-                        color = Color.White.copy(alpha = 0.86f)
-                    )
+                    Text("Everything you need,\nin one app.", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                    Text("Astrology, events, consultancy, travel and shopping.", color = Color.White.copy(alpha = 0.86f))
                 }
                 Text("RW", color = Color.White, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
             }
         }
-
         Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            placeholder = { Text("Search services...") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        OutlinedTextField(value = query, onValueChange = { query = it }, leadingIcon = { Icon(Icons.Default.Search, null) }, placeholder = { Text("Search services...") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         Text("📞 +91 77093 78969  •  ✉ rawalworld@gmail.com", style = MaterialTheme.typography.bodySmall)
         Text("📍 Gujarat, India  •  💳 Google Pay", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(14.dp))
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 20.dp)
-        ) {
+        LazyVerticalGrid(columns = GridCells.Fixed(2), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
             items(filtered) { service ->
-                Card(
-                    onClick = { onOpen(service) },
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.height(150.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
+                Card(onClick = { onOpen(service) }, shape = RoundedCornerShape(18.dp), modifier = Modifier.height(150.dp)) {
+                    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                         Text(service.icon, style = MaterialTheme.typography.headlineMedium)
-                        Column {
-                            Text(service.title, fontWeight = FontWeight.Bold)
-                            Text(service.subtitle, style = MaterialTheme.typography.bodySmall)
-                        }
+                        Column { Text(service.title, fontWeight = FontWeight.Bold); Text(service.subtitle, style = MaterialTheme.typography.bodySmall) }
                     }
                 }
             }
@@ -397,124 +254,47 @@ fun ServiceScreen(service: Service, onBack: () -> Unit, onBook: () -> Unit) {
     LaunchedEffect(service.title) {
         if (service.title == "Online Shopping") {
             loadingProducts = true
-            fetchProducts { loaded ->
-                products = loaded
-                loadingProducts = false
-            }
+            fetchProducts { products = it; loadingProducts = false }
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        TextButton(onClick = onBack) {
-            Icon(Icons.Default.ArrowBack, contentDescription = null)
-            Spacer(Modifier.width(4.dp))
-            Text("Back to home")
-        }
-
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
+        TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null); Spacer(Modifier.width(4.dp)); Text("Back to home") }
         Text("${service.icon} ${service.title}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
         Text(service.subtitle)
         Spacer(Modifier.height(14.dp))
-
         service.options.forEach { option ->
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(option, modifier = Modifier.weight(1f))
-                    FilledTonalButton(
-                        onClick = {
-                            selectedInfo = option to (details[option] ?: "More information coming soon.")
-                        }
-                    ) {
-                        Text("Open")
-                    }
+            Card(shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(option, Modifier.weight(1f))
+                    FilledTonalButton(onClick = { selectedInfo = option to (details[option] ?: "More information coming soon.") }) { Text("Open") }
                 }
             }
         }
-
-        selectedInfo?.let { info ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Column(Modifier.padding(14.dp)) {
-                    Text(info.first, fontWeight = FontWeight.Bold)
-                    Text(info.second)
-                }
-            }
-        }
+        selectedInfo?.let { info -> Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) { Column(Modifier.padding(14.dp)) { Text(info.first, fontWeight = FontWeight.Bold); Text(info.second) } } }
 
         if (service.title == "Astrology") {
             Spacer(Modifier.height(12.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.padding(14.dp)) {
                     Text("Personal Astrology Details", fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = dob,
-                        onValueChange = { dob = it },
-                        label = { Text("Date of birth YYYY-MM-DD") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    OutlinedTextField(dob, { dob = it }, label = { Text("Date of birth YYYY-MM-DD") }, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = birthTime,
-                        onValueChange = { birthTime = it },
-                        label = { Text("Birth time HH:MM") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    OutlinedTextField(birthTime, { birthTime = it }, label = { Text("Birth time HH:MM") }, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = birthPlace,
-                        onValueChange = { birthPlace = it },
-                        label = { Text("Birth place") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    OutlinedTextField(birthPlace, { birthPlace = it }, label = { Text("Birth place") }, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(8.dp))
-                    Button(
-                        onClick = {
-                            if (dob.isBlank() || birthTime.isBlank() || birthPlace.isBlank()) {
-                                astrologyMessage = "Please fill all birth details."
-                            } else {
-                                astrologyMessage = "Submitting online..."
-                                val payload = JSONObject()
-                                    .put("date_of_birth", dob)
-                                    .put("birth_time", birthTime)
-                                    .put("birth_place", birthPlace)
-                                    .put("request_type", "kundli")
-                                postJson("astrology_requests", payload) { success ->
-                                    astrologyMessage = if (success) {
-                                        "Astrology request submitted online successfully."
-                                    } else {
-                                        "Online submission failed. Please check internet and try again."
-                                    }
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Submit Astrology Request")
-                    }
-                    if (astrologyMessage.isNotBlank()) {
-                        Spacer(Modifier.height(8.dp))
-                        Text(astrologyMessage, style = MaterialTheme.typography.bodySmall)
-                    }
+                    Button(onClick = {
+                        if (dob.isBlank() || birthTime.isBlank() || birthPlace.isBlank()) {
+                            astrologyMessage = "Please fill all birth details."
+                        } else {
+                            astrologyMessage = "Submitting online..."
+                            val payload = JSONObject().put("date_of_birth", dob).put("birth_time", birthTime).put("birth_place", birthPlace).put("request_type", "kundli")
+                            postJson("astrology_requests", payload) { astrologyMessage = if (it) "Astrology request submitted online successfully." else "Online submission failed. Please check internet and try again." }
+                        }
+                    }, modifier = Modifier.fillMaxWidth()) { Text("Submit Astrology Request") }
+                    if (astrologyMessage.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(astrologyMessage, style = MaterialTheme.typography.bodySmall) }
                 }
             }
         }
@@ -523,42 +303,20 @@ fun ServiceScreen(service: Service, onBack: () -> Unit, onBook: () -> Unit) {
             Spacer(Modifier.height(12.dp))
             Text("Online Products", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            if (loadingProducts) {
-                CircularProgressIndicator()
-            } else if (products.isEmpty()) {
-                Text("Could not load online products.")
-            } else {
-                products.forEach { product ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Column(Modifier.padding(14.dp)) {
-                            Text(product.name, fontWeight = FontWeight.Bold)
-                            Text(product.description, style = MaterialTheme.typography.bodySmall)
-                            Spacer(Modifier.height(4.dp))
-                            Text(product.price, fontWeight = FontWeight.Bold)
-                            product.url?.let { url ->
-                                Spacer(Modifier.height(8.dp))
-                                Button(onClick = { openWeb(context, url) }) {
-                                    Text("Open")
-                                }
-                            }
-                        }
+            if (loadingProducts) CircularProgressIndicator() else if (products.isEmpty()) Text("Could not load online products.") else products.forEach { product ->
+                Card(Modifier.fillMaxWidth().padding(vertical = 6.dp), shape = RoundedCornerShape(14.dp)) {
+                    Column(Modifier.padding(14.dp)) {
+                        Text(product.name, fontWeight = FontWeight.Bold)
+                        Text(product.description, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(4.dp))
+                        Text(product.price, fontWeight = FontWeight.Bold)
+                        product.url?.let { url -> Spacer(Modifier.height(8.dp)); Button(onClick = { openWeb(context, url) }) { Text("Open") } }
                     }
                 }
             }
         }
-
         Spacer(Modifier.height(14.dp))
-        Button(
-            onClick = onBook,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Request Booking / Quotation")
-        }
+        Button(onClick = onBook, modifier = Modifier.fillMaxWidth()) { Text("Request Booking / Quotation") }
     }
 }
 
@@ -571,95 +329,52 @@ fun BookingScreen(service: Service, onBack: () -> Unit, onSaved: (Booking) -> Un
     var date by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
+    var submitting by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
         TextButton(onClick = onBack) { Text("← Back") }
         Text("Booking / Quotation", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text(service.title)
         Spacer(Modifier.height(12.dp))
-
         OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(mobile, { mobile = it }, label = { Text("Mobile") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(city, { city = it }, label = { Text("City") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(date, { date = it }, label = { Text("Preferred date YYYY-MM-DD") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(date, { date = it }, label = { Text("Preferred date YYYY-MM-DD (optional)") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(note, { note = it }, label = { Text("Requirement") }, minLines = 3, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(10.dp))
-
-        Button(
-            onClick = {
-                if (name.isBlank() || mobile.isBlank() || city.isBlank()) {
-                    message = "Please enter name, mobile and city."
-                } else {
-                    val booking = Booking(
-                        service = service.title,
-                        name = name.trim(),
-                        mobile = mobile.trim(),
-                        city = city.trim(),
-                        date = date.trim(),
-                        note = note.trim()
-                    )
-                    onSaved(booking)
-                    message = "Submitting online..."
-
-                    val payload = JSONObject()
-                        .put("service", booking.service)
-                        .put("customer_name", booking.name)
-                        .put("mobile", booking.mobile)
-                        .put("city", booking.city)
-                        .put("source", "android")
-
-                    if (booking.date.isNotBlank()) payload.put("preferred_date", booking.date)
-                    if (booking.note.isNotBlank()) payload.put("requirement", booking.note)
-
-                    postJson("bookings", payload) { success ->
-                        message = if (success) {
-                            "Request submitted online successfully."
-                        } else {
-                            "Saved on phone, but online submission failed."
-                        }
-                    }
+        Button(enabled = !submitting, onClick = {
+            if (name.isBlank() || mobile.isBlank() || city.isBlank()) {
+                message = "Please enter name, mobile and city."
+            } else {
+                val booking = Booking(service.title, name.trim(), mobile.trim(), city.trim(), date.trim(), note.trim())
+                onSaved(booking)
+                submitting = true
+                message = "Submitting online..."
+                val payload = JSONObject().put("service", booking.service).put("customer_name", booking.name).put("mobile", booking.mobile).put("city", booking.city).put("source", "android")
+                if (Regex("\\d{4}-\\d{2}-\\d{2}").matches(booking.date)) payload.put("preferred_date", booking.date)
+                if (booking.note.isNotBlank()) payload.put("requirement", booking.note)
+                postJson("bookings", payload) { success ->
+                    submitting = false
+                    message = if (success) "✅ Request submitted online successfully." else "⚠️ Saved on phone, but online submission failed."
                 }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Submit Request")
-        }
-
-        if (message.isNotBlank()) {
-            Spacer(Modifier.height(8.dp))
-            Text(message)
-        }
+            }
+        }, modifier = Modifier.fillMaxWidth()) { Text(if (submitting) "Submitting..." else "Submit Request") }
+        if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message) }
     }
 }
 
 @Composable
 fun BookingsScreen(items: List<Booking>) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
         Text("My Bookings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
-        if (items.isEmpty()) {
-            Text("No booking requests yet.")
-        }
+        if (items.isEmpty()) Text("No booking requests yet.")
         items.asReversed().forEach { booking ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            ) {
+            Card(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                 Column(Modifier.padding(12.dp)) {
                     Text(booking.service, fontWeight = FontWeight.Bold)
                     Text("${booking.name} • ${booking.mobile} • ${booking.city}", style = MaterialTheme.typography.bodySmall)
@@ -680,13 +395,7 @@ fun ProfileScreen() {
     var email by remember { mutableStateOf(prefs.getString("email", "") ?: "") }
     var city by remember { mutableStateOf(prefs.getString("city", "") ?: "") }
     var message by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
         Text("Profile", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(name, { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
@@ -697,23 +406,7 @@ fun ProfileScreen() {
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(city, { city = it }, label = { Text("City") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(10.dp))
-        Button(
-            onClick = {
-                prefs.edit()
-                    .putString("name", name)
-                    .putString("mobile", mobile)
-                    .putString("email", email)
-                    .putString("city", city)
-                    .apply()
-                message = "Profile saved."
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Save Profile")
-        }
-        if (message.isNotBlank()) {
-            Spacer(Modifier.height(8.dp))
-            Text(message)
-        }
+        Button(onClick = { prefs.edit().putString("name", name).putString("mobile", mobile).putString("email", email).putString("city", city).apply(); message = "Profile saved." }, modifier = Modifier.fillMaxWidth()) { Text("Save Profile") }
+        if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message) }
     }
 }
