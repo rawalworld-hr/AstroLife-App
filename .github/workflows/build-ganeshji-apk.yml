@@ -1,0 +1,70 @@
+name: Build Rawalworld Ganeshji APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'app/src/main/res/drawable/ganeshji_launcher.xml'
+      - '.github/workflows/build-ganeshji-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare current Rawalworld source
+        shell: bash
+        run: |
+          rm -f app/src/main/java/com/astrolife/app/MainActivity.kt
+          rm -f app/src/main/java/com/astrolife/app/RawalworldActivity.kt
+          rm -f app/src/main/java/com/astrolife/app/MainActivityV2.kt
+          cp .github/assets/MainActivity.v2.kt app/src/main/java/com/astrolife/app/MainActivityV2.kt
+          grep -E '^[[:space:]]+python3 \.github/assets/[^ ]+\.py[[:space:]]*$' .github/workflows/build-final-apk.yml | sed 's/^[[:space:]]*//' > /tmp/rawalworld-patches.sh
+          cat /tmp/rawalworld-patches.sh
+          bash /tmp/rawalworld-patches.sh
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          path=Path('app/src/main/AndroidManifest.xml')
+          ns='http://schemas.android.com/apk/res/android'
+          ET.register_namespace('android',ns)
+          tree=ET.parse(path)
+          root=tree.getroot()
+          app=root.find('application')
+          app.set('{%s}label'%ns,'Rawalworld')
+          app.set('{%s}icon'%ns,'@drawable/ganeshji_launcher')
+          app.set('{%s}roundIcon'%ns,'@drawable/ganeshji_launcher')
+          for a in list(app.findall('activity')):
+              app.remove(a)
+          act=ET.SubElement(app,'activity')
+          act.set('{%s}name'%ns,'.MainActivityV2')
+          act.set('{%s}exported'%ns,'true')
+          f=ET.SubElement(act,'intent-filter')
+          ET.SubElement(f,'action').set('{%s}name'%ns,'android.intent.action.MAIN')
+          ET.SubElement(f,'category').set('{%s}name'%ns,'android.intent.category.LAUNCHER')
+          tree.write(path,encoding='utf-8',xml_declaration=True)
+          PY
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build APK
+        run: gradle assembleDebug
+
+      - name: Upload Rawalworld Ganeshji APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rawalworld-Ganeshji-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
