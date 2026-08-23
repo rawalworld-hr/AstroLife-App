@@ -10,6 +10,7 @@ on:
       - '.github/assets/fix_admin_dashboard_v2.py'
       - '.github/assets/fix_travel_v2.py'
       - '.github/assets/sync_remaining_features_v3.py'
+      - '.github/assets/fix_complete_v5.py'
       - '.github/assets/rawalworld_logo.b64'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
@@ -41,6 +42,7 @@ jobs:
           python3 .github/assets/fix_admin_dashboard_v2.py
           python3 .github/assets/fix_travel_v2.py
           python3 .github/assets/sync_remaining_features_v3.py
+          python3 .github/assets/fix_complete_v5.py
           mkdir -p app/src/main/res/drawable
           base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_logo.jpg
           python3 - <<'PY'
