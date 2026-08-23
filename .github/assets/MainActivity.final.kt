@@ -2,37 +2,23 @@ package com.astrolife.app
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -41,70 +27,227 @@ import androidx.compose.ui.unit.dp
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.URLEncoder
 import java.net.URL
+import java.net.URLEncoder
 
-data class Service(val id:String,val icon:String,val title:String,val subtitle:String,val options:List<String>)
-data class Booking(val service:String,val name:String,val mobile:String,val city:String,val date:String,val note:String)
-data class Product(val id:String,val name:String,val category:String,val description:String,val price:Double,val imageUrl:String?,val externalUrl:String?)
-data class ServiceContact(val serviceId:String,val contactName:String,val phone:String,val email:String,val whatsapp:String)
-data class AdminSession(val accessToken:String,val refreshToken:String)
-data class AdminBooking(val id:String,val service:String,val name:String,val mobile:String,val city:String,val status:String)
-data class AdminAstrology(val id:String,val type:String,val name:String,val mobile:String,val place:String,val status:String)
-data class AdminOrder(val id:String,val name:String,val mobile:String,val amount:String,val status:String)
-data class AdminData(val bookings:List<AdminBooking>,val astrology:List<AdminAstrology>,val productCount:Int,val orders:List<AdminOrder>)
+private const val SB_URL = "https://hcpvuripnlhofxfczyyb.supabase.co"
+private const val SB_KEY = "sb_publishable_J8YoD4yenQO-nlEMoC1kvA_3_vJgGjg"
+private const val PREFS = "rawalworld_final"
+private const val ADMIN_TOKEN = "admin_token"
+private val Purple = Color(0xFF6C4DB4)
+private val Bg = Color(0xFFFFF8FF)
 
-private const val SUPABASE_URL="https://hcpvuripnlhofxfczyyb.supabase.co"
-private const val SUPABASE_KEY="sb_publishable_J8YoD4yenQO-nlEMoC1kvA_3_vJgGjg"
-private const val PREFS="rawalworld_prefs"
-private const val ADMIN_ACCESS="admin_access_token"
-private const val ADMIN_REFRESH="admin_refresh_token"
-private val Brand=Color(0xFF8F3D2B)
-private val Hero=Color(0xFF7D2D1F)
-private val WarmBg=Color(0xFFFFF9F5)
+data class ProductRow(val id:String,val name:String,val category:String,val description:String,val price:Double,val active:Boolean)
+data class MasterRow(val id:String,val type:String,val name:String,val active:Boolean)
+data class ClientRow(val name:String,val mobile:String,val email:String,val city:String,val address:String,val pincode:String,val source:String)
+data class GalleryRow(val title:String,val type:String,val image:String)
 
-private val services=listOf(
- Service("astrology","🔮","Astrology","Horoscope, Kundli & consultation",listOf("Daily Horoscope","Kundli / Birth Chart","Marriage Matching","Ask an Astrologer","Muhurat & Puja")),
- Service("events","🎉","Events","Weddings, birthdays & corporate events",listOf("Wedding","Birthday","Engagement","Anniversary","Corporate Event","Religious Event")),
- Service("decoration","🌸","Decoration","Themes, flowers, stage & lighting",listOf("Wedding Decoration","Stage Decoration","Birthday Theme","Flower Decoration","Mandap","Lighting")),
- Service("catering","🍽️","Catering","Menus and packages for every occasion",listOf("Gujarati","Punjabi","South Indian","Jain","Continental","Custom Package")),
- Service("consultancy","💼","Consultancy","Business and professional services",listOf("Accounts & Finance","HR","Business Setup","French Support","Real Estate","Documentation")),
- Service("travel","✈️","Tours & Travel","Trips, hotels, visa & transport",listOf("Holiday Packages","Hotels","Flight Enquiry","Visa Assistance","Cab / Vehicle Rental","Group Tours")),
- Service("shopping","🛍️","Online Shopping","Products, gifts and essentials",listOf("Puja Products","Astrology Products","Gifts","Decoration Items","Travel Accessories","Local Products"))
-)
-private val details=mapOf(
- "Daily Horoscope" to "Daily horoscope gives a simple overview for career, money, relationships, health and general outlook.",
- "Kundli / Birth Chart" to "A Kundli is a Vedic birth chart prepared from your birth date, exact time and place.",
- "Marriage Matching" to "Marriage matching compares two birth charts for traditional compatibility and relationship guidance.",
- "Ask an Astrologer" to "Send your birth details and question for a personal consultation.",
- "Muhurat & Puja" to "Muhurat helps identify traditionally favorable timing for important events.",
- "Wedding" to "Plan venue, decoration, catering, photography, transport and coordination.","Birthday" to "Birthday themes, decoration, cake, catering and entertainment.","Engagement" to "Stage, decoration, catering and guest arrangements.","Anniversary" to "Decoration, dining, gifts and celebration packages.","Corporate Event" to "Meetings, launches, conferences and staff events.","Religious Event" to "Decoration, catering and support for puja and religious functions.","Wedding Decoration" to "Mandap, stage, floral, lighting and entrance decoration packages.","Stage Decoration" to "Customized stage decoration for all event types.","Birthday Theme" to "Birthday themes with balloons, backdrops and customized decor.","Flower Decoration" to "Fresh and artificial flower decoration.","Mandap" to "Traditional and modern mandap decoration.","Lighting" to "Decorative and ambient event lighting.","Gujarati" to "Gujarati catering menus for functions and weddings.","Punjabi" to "Punjabi menu packages with starters, mains and desserts.","South Indian" to "South Indian meal and live-counter options.","Jain" to "Jain-friendly menu options.","Continental" to "Continental snacks and buffet options.","Custom Package" to "Custom catering based on guest count and budget.","Accounts & Finance" to "Bookkeeping, MIS, budgeting and finance support.","HR" to "Recruitment support, documentation and HR processes.","Business Setup" to "Business planning and setup support.","French Support" to "French language communication and translation support.","Real Estate" to "Property search and documentation coordination.","Documentation" to "General business documentation support.","Holiday Packages" to "Domestic and international holiday planning.","Hotels" to "Hotel enquiry and accommodation planning.","Flight Enquiry" to "Flight route and fare enquiry.","Visa Assistance" to "Visa checklist and application-support guidance.","Cab / Vehicle Rental" to "Cab, car, pickup and group transport rental.","Group Tours" to "Customized group tour planning.","Puja Products" to "Browse puja essentials.","Astrology Products" to "Browse astrology products and digital services.","Gifts" to "Browse gifting options.","Decoration Items" to "Browse event and home decoration items.","Travel Accessories" to "Browse useful travel accessories.","Local Products" to "Discover selected local and regional products."
-)
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme(colorScheme = lightColorScheme(primary = Purple, background = Bg, surface = Color.White)) {
+                RawalworldApp()
+            }
+        }
+    }
+}
 
-class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);setContent{MaterialTheme(colorScheme=lightColorScheme(primary=Brand,surface=Color.White,background=WarmBg)){RawalworldApp()}}}}
-private fun mainHandler(block:()->Unit)=Handler(Looper.getMainLooper()).post(block)
-private fun openWeb(context:Context,url:String){context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))}
-private fun loadBookings(context:Context):List<Booking>{val raw=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("bookings","")?:"";if(raw.isBlank())return emptyList();return raw.split("\u001e").mapNotNull{r->val p=r.split("\u001f");if(p.size<6)null else Booking(p[0],p[1],p[2],p[3],p[4],p[5])}}
-private fun saveBookings(context:Context,items:List<Booking>){val raw=items.joinToString("\u001e"){listOf(it.service,it.name,it.mobile,it.city,it.date,it.note).joinToString("\u001f")};context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString("bookings",raw).apply()}
-private fun saveAdminSession(context:Context,s:AdminSession?){val e=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit();if(s==null)e.remove(ADMIN_ACCESS).remove(ADMIN_REFRESH) else e.putString(ADMIN_ACCESS,s.accessToken).putString(ADMIN_REFRESH,s.refreshToken);e.apply()}
-private fun loadAdminSession(context:Context):AdminSession?{val p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);val a=p.getString(ADMIN_ACCESS,"")?:"";val r=p.getString(ADMIN_REFRESH,"")?:"";return if(a.isBlank())null else AdminSession(a,r)}
-private fun postJson(table:String,payload:JSONObject,onDone:(Boolean)->Unit){Thread{var ok=false;try{val c=URL("$SUPABASE_URL/rest/v1/$table").openConnection() as HttpURLConnection;c.requestMethod="POST";c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("apikey",SUPABASE_KEY);c.setRequestProperty("Prefer","return=minimal");c.doOutput=true;c.outputStream.use{it.write(payload.toString().toByteArray())};ok=c.responseCode in 200..299;c.disconnect()}catch(_:Exception){};mainHandler{onDone(ok)}}.start()}
-private fun fetchProducts(onDone:(List<Product>)->Unit){Thread{val out=mutableListOf<Product>();try{val c=URL("$SUPABASE_URL/rest/v1/products?select=id,name,category,description,price,currency,image_url,external_url&is_active=eq.true&order=created_at.desc").openConnection() as HttpURLConnection;c.setRequestProperty("apikey",SUPABASE_KEY);val a=JSONArray(c.inputStream.bufferedReader().use{it.readText()});for(i in 0 until a.length()){val x=a.getJSONObject(i);out+=Product(x.optString("id"),x.optString("name"),x.optString("category"),x.optString("description"),x.optDouble("price",0.0),x.optString("image_url").takeIf{it.isNotBlank()&&it!="null"},x.optString("external_url").takeIf{it.isNotBlank()&&it!="null"})};c.disconnect()}catch(_:Exception){};mainHandler{onDone(out)}}.start()}
-private fun fetchServiceContact(id:String,onDone:(ServiceContact?)->Unit){Thread{var r:ServiceContact?=null;try{val e=URLEncoder.encode(id,"UTF-8");val c=URL("$SUPABASE_URL/rest/v1/service_contacts?select=service_id,contact_name,phone,email,whatsapp&service_id=eq.$e&limit=1").openConnection() as HttpURLConnection;c.setRequestProperty("apikey",SUPABASE_KEY);val a=JSONArray(c.inputStream.bufferedReader().use{it.readText()});if(a.length()>0){val x=a.getJSONObject(0);r=ServiceContact(x.optString("service_id"),x.optString("contact_name"),x.optString("phone"),x.optString("email"),x.optString("whatsapp"))};c.disconnect()}catch(_:Exception){};mainHandler{onDone(r)}}.start()}
-private fun adminLogin(email:String,password:String,onDone:(AdminSession?,String)->Unit){Thread{var s:AdminSession?=null;var m="Login failed.";try{val c=URL("$SUPABASE_URL/auth/v1/token?grant_type=password").openConnection() as HttpURLConnection;c.requestMethod="POST";c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("apikey",SUPABASE_KEY);c.doOutput=true;c.outputStream.use{it.write(JSONObject().put("email",email).put("password",password).toString().toByteArray())};val code=c.responseCode;val body=if(code in 200..299)c.inputStream.bufferedReader().use{it.readText()} else c.errorStream?.bufferedReader()?.use{it.readText()}.orEmpty();if(code in 200..299){val j=JSONObject(body);val a=j.optString("access_token");if(a.isNotBlank()){s=AdminSession(a,j.optString("refresh_token"));m="Login successful."}}else m="Login failed. Check email/password.";c.disconnect()}catch(_:Exception){m="Unable to connect to admin login."};mainHandler{onDone(s,m)}}.start()}
-private fun refreshAdminSession(token:String,onDone:(AdminSession?)->Unit){if(token.isBlank()){onDone(null);return};Thread{var s:AdminSession?=null;try{val c=URL("$SUPABASE_URL/auth/v1/token?grant_type=refresh_token").openConnection() as HttpURLConnection;c.requestMethod="POST";c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("apikey",SUPABASE_KEY);c.doOutput=true;c.outputStream.use{it.write(JSONObject().put("refresh_token",token).toString().toByteArray())};if(c.responseCode in 200..299){val j=JSONObject(c.inputStream.bufferedReader().use{it.readText()});val a=j.optString("access_token");if(a.isNotBlank())s=AdminSession(a,j.optString("refresh_token",token))};c.disconnect()}catch(_:Exception){};mainHandler{onDone(s)}}.start()}
-private fun forgotAdminPassword(email:String,onDone:(Boolean)->Unit){Thread{var ok=false;try{val c=URL("$SUPABASE_URL/auth/v1/recover").openConnection() as HttpURLConnection;c.requestMethod="POST";c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("apikey",SUPABASE_KEY);c.doOutput=true;c.outputStream.use{it.write(JSONObject().put("email",email).toString().toByteArray())};ok=c.responseCode in 200..299;c.disconnect()}catch(_:Exception){};mainHandler{onDone(ok)}}.start()}
-private fun adminWrite(token:String,path:String,method:String,payload:JSONObject,onDone:(Boolean)->Unit){Thread{var ok=false;try{val c=URL("$SUPABASE_URL/rest/v1/$path").openConnection() as HttpURLConnection;c.requestMethod=method;c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("apikey",SUPABASE_KEY);c.setRequestProperty("Authorization","Bearer $token");c.setRequestProperty("Prefer","return=minimal");c.doOutput=true;c.outputStream.use{it.write(payload.toString().toByteArray())};ok=c.responseCode in 200..299;c.disconnect()}catch(_:Exception){};mainHandler{onDone(ok)}}.start()}
-private fun upsertServiceContact(token:String,cnt:ServiceContact,onDone:(Boolean)->Unit){Thread{var ok=false;try{val c=URL("$SUPABASE_URL/rest/v1/service_contacts?on_conflict=service_id").openConnection() as HttpURLConnection;c.requestMethod="POST";c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("apikey",SUPABASE_KEY);c.setRequestProperty("Authorization","Bearer $token");c.setRequestProperty("Prefer","resolution=merge-duplicates,return=minimal");c.doOutput=true;val j=JSONObject().put("service_id",cnt.serviceId).put("contact_name",cnt.contactName).put("phone",cnt.phone).put("email",cnt.email).put("whatsapp",cnt.whatsapp);c.outputStream.use{it.write(j.toString().toByteArray())};ok=c.responseCode in 200..299;c.disconnect()}catch(_:Exception){};mainHandler{onDone(ok)}}.start()}
-private fun uploadProductPhoto(context:Context,token:String,uri:Uri,onDone:(String?)->Unit){Thread{var u:String?=null;try{val bytes=context.contentResolver.openInputStream(uri)?.use{it.readBytes()}?:throw IllegalStateException();val mime=context.contentResolver.getType(uri)?:"image/jpeg";val ext=if(mime.contains("png"))"png" else if(mime.contains("webp"))"webp" else "jpg";val name="product_${System.currentTimeMillis()}.$ext";val enc=URLEncoder.encode(name,"UTF-8").replace("+","%20");val c=URL("$SUPABASE_URL/storage/v1/object/product-gallery/$enc").openConnection() as HttpURLConnection;c.requestMethod="POST";c.setRequestProperty("Content-Type",mime);c.setRequestProperty("apikey",SUPABASE_KEY);c.setRequestProperty("Authorization","Bearer $token");c.doOutput=true;c.outputStream.use{it.write(bytes)};if(c.responseCode in 200..299)u="$SUPABASE_URL/storage/v1/object/public/product-gallery/$enc";c.disconnect()}catch(_:Exception){};mainHandler{onDone(u)}}.start()}
-private fun fetchAdminData(token:String,onDone:(AdminData?,String)->Unit){Thread{try{fun arr(path:String):JSONArray{val c=URL("$SUPABASE_URL/rest/v1/$path").openConnection() as HttpURLConnection;c.setRequestProperty("apikey",SUPABASE_KEY);c.setRequestProperty("Authorization","Bearer $token");if(c.responseCode !in 200..299){c.disconnect();throw IllegalStateException()};val a=JSONArray(c.inputStream.bufferedReader().use{it.readText()});c.disconnect();return a};val b=arr("bookings?select=id,service,customer_name,mobile,city,status&order=created_at.desc&limit=50");val a=arr("astrology_requests?select=id,request_type,customer_name,mobile,birth_place,status&order=created_at.desc&limit=50");val p=arr("products?select=id&is_active=eq.true");val o=arr("orders?select=id,customer_name,mobile,total_amount,currency,order_status&order=created_at.desc&limit=50");val bs=(0 until b.length()).map{i->val x=b.getJSONObject(i);AdminBooking(x.optString("id"),x.optString("service"),x.optString("customer_name"),x.optString("mobile"),x.optString("city"),x.optString("status","submitted"))};val aa=(0 until a.length()).map{i->val x=a.getJSONObject(i);AdminAstrology(x.optString("id"),x.optString("request_type","kundli"),x.optString("customer_name"),x.optString("mobile"),x.optString("birth_place"),x.optString("status","submitted"))};val os=(0 until o.length()).map{i->val x=o.getJSONObject(i);AdminOrder(x.optString("id"),x.optString("customer_name"),x.optString("mobile"),"INR ${x.optString("total_amount","0")}",x.optString("order_status","submitted"))};mainHandler{onDone(AdminData(bs,aa,p.length(),os),"Dashboard updated.")}}catch(_:Exception){mainHandler{onDone(null,"Unable to load admin data.")}}}.start()}
+private fun ui(block:()->Unit)=Handler(Looper.getMainLooper()).post(block)
+private fun prefs(c:Context)=c.getSharedPreferences(PREFS,Context.MODE_PRIVATE)
+private fun token(c:Context)=prefs(c).getString(ADMIN_TOKEN,"") ?: ""
+private fun saveToken(c:Context,v:String)=prefs(c).edit().putString(ADMIN_TOKEN,v).apply()
+private fun conn(url:String,auth:String?=null):HttpURLConnection{
+    val c=URL(url).openConnection() as HttpURLConnection
+    c.setRequestProperty("apikey",SB_KEY)
+    if(!auth.isNullOrBlank()) c.setRequestProperty("Authorization","Bearer $auth")
+    return c
+}
+private fun getArray(path:String,auth:String?=null):JSONArray{
+    val c=conn("$SB_URL/rest/v1/$path",auth)
+    val code=c.responseCode
+    val body=if(code in 200..299)c.inputStream.bufferedReader().use{it.readText()} else c.errorStream?.bufferedReader()?.use{it.readText()}.orEmpty()
+    c.disconnect()
+    if(code !in 200..299) throw IllegalStateException(body)
+    return JSONArray(body)
+}
+private fun write(path:String,method:String,payload:JSONObject?=null,auth:String?=null):Boolean{
+    val c=conn("$SB_URL/rest/v1/$path",auth)
+    c.requestMethod=method
+    c.setRequestProperty("Content-Type","application/json")
+    c.setRequestProperty("Prefer","return=minimal")
+    if(payload!=null){c.doOutput=true;c.outputStream.use{it.write(payload.toString().toByteArray())}}
+    val ok=c.responseCode in 200..299
+    c.disconnect()
+    return ok
+}
+private fun login(email:String,password:String,onDone:(String?,String)->Unit){
+    Thread{
+        try{
+            val c=conn("$SB_URL/auth/v1/token?grant_type=password")
+            c.requestMethod="POST";c.setRequestProperty("Content-Type","application/json");c.doOutput=true
+            c.outputStream.use{it.write(JSONObject().put("email",email).put("password",password).toString().toByteArray())}
+            val code=c.responseCode
+            val body=if(code in 200..299)c.inputStream.bufferedReader().use{it.readText()} else c.errorStream?.bufferedReader()?.use{it.readText()}.orEmpty()
+            c.disconnect()
+            if(code in 200..299){val j=JSONObject(body);ui{onDone(j.optString("access_token"),"Login successful.")}} else ui{onDone(null,"Check email/password or admin access.")}
+        }catch(_:Exception){ui{onDone(null,"Unable to connect.")}}
+    }.start()
+}
+private fun forgot(email:String,onDone:(Boolean)->Unit){Thread{val ok=try{val c=conn("$SB_URL/auth/v1/recover");c.requestMethod="POST";c.setRequestProperty("Content-Type","application/json");c.doOutput=true;c.outputStream.use{it.write(JSONObject().put("email",email).toString().toByteArray())};val r=c.responseCode in 200..299;c.disconnect();r}catch(_:Exception){false};ui{onDone(ok)}}.start()}
+private fun loadPayment(onDone:(String,String)->Unit){Thread{var payee="Haresh Rawal";var upi="harshrawal1929-1@okicici";try{val a=getArray("app_settings?select=setting_key,setting_value&setting_key=in.(payment_payee_name,payment_upi_id)");for(i in 0 until a.length()){val x=a.getJSONObject(i);when(x.optString("setting_key")){"payment_payee_name"->payee=x.optString("setting_value",payee);"payment_upi_id"->upi=x.optString("setting_value",upi)}}}catch(_:Exception){};ui{onDone(payee,upi)}}.start()}
+private fun saveSetting(auth:String,key:String,value:String,onDone:(Boolean)->Unit){Thread{val ok=try{write("app_settings?setting_key=eq.${URLEncoder.encode(key,"UTF-8")}","PATCH",JSONObject().put("setting_value",value),auth)}catch(_:Exception){false};ui{onDone(ok)}}.start()}
 
-@Composable fun RawalworldApp(){val context=LocalContext.current;var screen by remember{mutableStateOf("home")};var selected by remember{mutableStateOf<Service?>(null)};var bookings by remember{mutableStateOf(loadBookings(context))};Scaffold(bottomBar={NavigationBar{NavigationBarItem(screen=="home",{screen="home";selected=null},{Icon(Icons.Default.Home,null)},label={Text("Home")});NavigationBarItem(screen=="bookings",{screen="bookings";bookings=loadBookings(context)},{Icon(Icons.Default.DateRange,null)},label={Text("Bookings")});NavigationBarItem(screen=="service"&&selected?.id=="shopping",{selected=services.last();screen="service"},{Icon(Icons.Default.ShoppingCart,null)},label={Text("Shop")});NavigationBarItem(screen=="profile",{screen="profile"},{Icon(Icons.Default.Person,null)},label={Text("Profile")});NavigationBarItem(screen=="admin",{screen="admin"},{Text("🔐")},label={Text("Admin")})}}){pad->Box(Modifier.fillMaxSize().padding(pad)){when(screen){"service"->selected?.let{ServiceScreen(it,{screen="home"},{screen="booking"})};"booking"->selected?.let{s->BookingScreen(s,{screen="service"}){b->bookings=bookings+b;saveBookings(context,bookings)}};"bookings"->BookingsScreen(bookings);"profile"->ProfileScreen();"admin"->AdminScreen();else->HomeScreen{selected=it;screen="service"}}}}}
-@Composable fun HomeScreen(onOpen:(Service)->Unit){var q by remember{mutableStateOf("")};val f=services.filter{q.isBlank()||it.title.contains(q,true)||it.subtitle.contains(q,true)||it.options.any{o->o.contains(q,true)}};Column(Modifier.fillMaxSize().padding(horizontal=16.dp)){Spacer(Modifier.height(10.dp));Row(verticalAlignment=Alignment.CenterVertically){Image(painterResource(R.drawable.rawalworld_logo),"Rawalworld Shiva and Adishakti",Modifier.size(72.dp),contentScale=ContentScale.Crop);Spacer(Modifier.width(10.dp));Column{Text("Rawalworld",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold);Text("Gujarat lifestyle & services super app",style=MaterialTheme.typography.bodySmall)}};Spacer(Modifier.height(10.dp));Card(colors=CardDefaults.cardColors(containerColor=Hero),shape=RoundedCornerShape(24.dp),modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(22.dp)){Text("Everything you need,\nin one app.",color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.ExtraBold);Text("Astrology, events, consultancy, travel and shopping.",color=Color.White.copy(.86f))}};OutlinedTextField(q,{q=it},leadingIcon={Icon(Icons.Default.Search,null)},placeholder={Text("Search services...")},modifier=Modifier.fillMaxWidth());Text("📞 +91 77093 78969 • ✉ rawalworld@gmail.com",style=MaterialTheme.typography.bodySmall);Text("📍 Gujarat, India • 💳 Google Pay / INR",style=MaterialTheme.typography.bodySmall);Spacer(Modifier.height(10.dp));LazyVerticalGrid(columns=GridCells.Fixed(2),verticalArrangement=Arrangement.spacedBy(12.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(bottom=20.dp)){items(f){s->Card(onClick={onOpen(s)},shape=RoundedCornerShape(18.dp),modifier=Modifier.height(145.dp)){Column(Modifier.fillMaxSize().padding(16.dp),verticalArrangement=Arrangement.SpaceBetween){Text(s.icon,style=MaterialTheme.typography.headlineMedium);Column{Text(s.title,fontWeight=FontWeight.Bold);Text(s.subtitle,style=MaterialTheme.typography.bodySmall)}}}}}}}
-@Composable fun ServiceScreen(service:Service,onBack:()->Unit,onBook:()->Unit){val context=LocalContext.current;val prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);var sel by remember{mutableStateOf<Pair<String,String>?>(null)};var dob by remember{mutableStateOf("")};var bt by remember{mutableStateOf("")};var place by remember{mutableStateOf("")};var astroMsg by remember{mutableStateOf("")};var products by remember{mutableStateOf<List<Product>>(emptyList())};var loading by remember{mutableStateOf(false)};var contact by remember{mutableStateOf<ServiceContact?>(null)};var orderMsg by remember{mutableStateOf("")};LaunchedEffect(service.id){fetchServiceContact(service.id){contact=it};if(service.id=="shopping"){loading=true;fetchProducts{products=it;loading=false}}};Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){TextButton(onClick=onBack){Icon(Icons.Default.ArrowBack,null);Text(" Back")};Text("${service.icon} ${service.title}",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold);Text(service.subtitle);contact?.let{c->Card(Modifier.fillMaxWidth().padding(vertical=8.dp)){Column(Modifier.padding(12.dp)){Text("Service Contact",fontWeight=FontWeight.Bold);if(c.contactName.isNotBlank())Text(c.contactName);if(c.phone.isNotBlank())Text("📞 ${c.phone}");if(c.email.isNotBlank())Text("✉️ ${c.email}");if(c.whatsapp.isNotBlank())Text("WhatsApp: ${c.whatsapp}")}}};service.options.forEach{o->Card(Modifier.fillMaxWidth().padding(bottom=8.dp)){Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically){Text(o,Modifier.weight(1f));FilledTonalButton(onClick={sel=o to(details[o]?:"More information coming soon.")}){Text("Open")}}}};sel?.let{Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp)){Text(it.first,fontWeight=FontWeight.Bold);Text(it.second)}}};if(service.id=="astrology"){Card(Modifier.fillMaxWidth().padding(top=10.dp)){Column(Modifier.padding(12.dp)){Text("Personal Astrology Details",fontWeight=FontWeight.Bold);OutlinedTextField(dob,{dob=it},label={Text("Date of birth YYYY-MM-DD")},modifier=Modifier.fillMaxWidth());OutlinedTextField(bt,{bt=it},label={Text("Birth time HH:MM")},modifier=Modifier.fillMaxWidth());OutlinedTextField(place,{place=it},label={Text("Birth place")},modifier=Modifier.fillMaxWidth());Button(onClick={if(dob.isBlank()||bt.isBlank()||place.isBlank())astroMsg="Please fill all details." else postJson("astrology_requests",JSONObject().put("date_of_birth",dob).put("birth_time",bt).put("birth_place",place).put("request_type","kundli")){astroMsg=if(it)"Submitted online." else "Submission failed."}},modifier=Modifier.fillMaxWidth()){Text("Submit Astrology Request")};if(astroMsg.isNotBlank())Text(astroMsg)}}};if(service.id=="shopping"){Spacer(Modifier.height(10.dp));Text("Online Products",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);Text("All prices are INR.");if(loading)CircularProgressIndicator() else products.forEach{p->Card(Modifier.fillMaxWidth().padding(vertical=6.dp)){Column(Modifier.padding(12.dp)){p.imageUrl?.let{RemoteImage(it)};Text(p.name,fontWeight=FontWeight.Bold);Text(p.description,style=MaterialTheme.typography.bodySmall);Text(if(p.price==0.0)"FREE" else "INR ${String.format("%.2f",p.price)}",fontWeight=FontWeight.Bold);Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){p.externalUrl?.let{u->OutlinedButton(onClick={openWeb(context,u)}){Text("Open")}};Button(onClick={val n=prefs.getString("name","")?:"";val m=prefs.getString("mobile","")?:"";val city=prefs.getString("city","")?:"";if(n.isBlank()||m.isBlank())orderMsg="Save name/mobile in Profile first." else postJson("orders",JSONObject().put("customer_name",n).put("mobile",m).put("city",city).put("total_amount",p.price).put("currency","INR").put("payment_method","GPay").put("payment_status",if(p.price==0.0)"paid" else "pending").put("order_status","submitted")){orderMsg=if(it)"✅ Order submitted." else "Order failed."}}){Text("Order")}}}}};if(orderMsg.isNotBlank())Text(orderMsg)};Spacer(Modifier.height(12.dp));Button(onClick=onBook,modifier=Modifier.fillMaxWidth()){Text("Request Booking / Quotation")}}}
-@Composable private fun RemoteImage(url:String){var bitmap by remember(url){mutableStateOf<Bitmap?>(null)};LaunchedEffect(url){Thread{try{val b=URL(url).openStream().use{BitmapFactory.decodeStream(it)};mainHandler{bitmap=b}}catch(_:Exception){}}.start()};bitmap?.let{Image(it.asImageBitmap(),"Product photo",Modifier.fillMaxWidth().height(180.dp),contentScale=ContentScale.Crop);Spacer(Modifier.height(6.dp))}}
-@Composable fun BookingScreen(service:Service,onBack:()->Unit,onSaved:(Booking)->Unit){val p=LocalContext.current.getSharedPreferences(PREFS,Context.MODE_PRIVATE);var n by remember{mutableStateOf(p.getString("name","")?:"")};var m by remember{mutableStateOf(p.getString("mobile","")?:"")};var c by remember{mutableStateOf(p.getString("city","")?:"")};var d by remember{mutableStateOf("")};var note by remember{mutableStateOf("")};var msg by remember{mutableStateOf("")};Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){TextButton(onClick=onBack){Text("← Back")};Text("Booking / Quotation",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);OutlinedTextField(n,{n=it},label={Text("Name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(m,{m=it},label={Text("Mobile")},modifier=Modifier.fillMaxWidth());OutlinedTextField(c,{c=it},label={Text("City")},modifier=Modifier.fillMaxWidth());OutlinedTextField(d,{d=it},label={Text("Preferred date YYYY-MM-DD")},modifier=Modifier.fillMaxWidth());OutlinedTextField(note,{note=it},label={Text("Requirement")},modifier=Modifier.fillMaxWidth());Button(onClick={if(n.isBlank()||m.isBlank()||c.isBlank())msg="Enter name, mobile and city." else{val b=Booking(service.title,n,m,c,d,note);onSaved(b);val j=JSONObject().put("service",b.service).put("customer_name",b.name).put("mobile",b.mobile).put("city",b.city).put("source","android");if(Regex("\\d{4}-\\d{2}-\\d{2}").matches(d))j.put("preferred_date",d);if(note.isNotBlank())j.put("requirement",note);postJson("bookings",j){msg=if(it)"✅ Submitted online." else "Saved locally; online failed."}}},modifier=Modifier.fillMaxWidth()){Text("Submit Request")};if(msg.isNotBlank())Text(msg)}}
-@Composable fun BookingsScreen(items:List<Booking>){Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){Text("My Bookings",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);items.asReversed().forEach{b->Card(Modifier.fillMaxWidth().padding(vertical=4.dp)){Column(Modifier.padding(12.dp)){Text(b.service,fontWeight=FontWeight.Bold);Text("${b.name} • ${b.mobile} • ${b.city}",style=MaterialTheme.typography.bodySmall)}}}}}
-@Composable fun ProfileScreen(){val c=LocalContext.current;val p=c.getSharedPreferences(PREFS,Context.MODE_PRIVATE);var n by remember{mutableStateOf(p.getString("name","")?:"")};var m by remember{mutableStateOf(p.getString("mobile","")?:"")};var e by remember{mutableStateOf(p.getString("email","")?:"")};var city by remember{mutableStateOf(p.getString("city","")?:"")};var msg by remember{mutableStateOf("")};Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){Text("Profile",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);OutlinedTextField(n,{n=it},label={Text("Name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(m,{m=it},label={Text("Mobile")},modifier=Modifier.fillMaxWidth());OutlinedTextField(e,{e=it},label={Text("Email")},modifier=Modifier.fillMaxWidth());OutlinedTextField(city,{city=it},label={Text("City")},modifier=Modifier.fillMaxWidth());Button(onClick={p.edit().putString("name",n).putString("mobile",m).putString("email",e).putString("city",city).apply();msg="Profile saved."},modifier=Modifier.fillMaxWidth()){Text("Save Profile")};if(msg.isNotBlank())Text(msg)}}
-@Composable fun AdminScreen(){val context=LocalContext.current;var email by remember{mutableStateOf(context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString("admin_email","")?:"")};var password by remember{mutableStateOf("")};var session by remember{mutableStateOf(loadAdminSession(context))};var msg by remember{mutableStateOf("")};var loading by remember{mutableStateOf(false)};var data by remember{mutableStateOf<AdminData?>(null)};var pn by remember{mutableStateOf("")};var cat by remember{mutableStateOf("Astrology Products")};var price by remember{mutableStateOf("0")};var desc by remember{mutableStateOf("")};var ext by remember{mutableStateOf("")};var photo by remember{mutableStateOf<Uri?>(null)};var cs by remember{mutableStateOf(services.first())};var cn by remember{mutableStateOf("")};var cp by remember{mutableStateOf("")};var ce by remember{mutableStateOf("")};var cw by remember{mutableStateOf("")};val picker=rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){photo=it;if(it!=null)msg="Product photo selected."};fun loadContact(){fetchServiceContact(cs.id){x->cn=x?.contactName?:"";cp=x?.phone?:"";ce=x?.email?:"";cw=x?.whatsapp?:""}};fun loadDash(s:AdminSession,retry:Boolean=true){loading=true;fetchAdminData(s.accessToken){d,m->if(d!=null){loading=false;data=d;msg=m}else if(retry&&s.refreshToken.isNotBlank())refreshAdminSession(s.refreshToken){r->if(r!=null){session=r;saveAdminSession(context,r);loadDash(r,false)}else{loading=false;session=null;saveAdminSession(context,null);msg="Session expired. Login again."}}else{loading=false;msg=m}}};fun status(path:String,key:String,value:String){val s=session?:return;adminWrite(s.accessToken,path,"PATCH",JSONObject().put(key,value)){ok->msg=if(ok)"Status updated." else "Update failed.";if(ok)loadDash(s)}};LaunchedEffect(Unit){session?.let{loadDash(it)};loadContact()};LaunchedEffect(cs.id){loadContact()};Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){Text("🔐 Rawalworld Admin",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold);if(session==null){Card(Modifier.fillMaxWidth()){Column(Modifier.padding(14.dp)){OutlinedTextField(email,{email=it},label={Text("Admin email")},modifier=Modifier.fillMaxWidth());OutlinedTextField(password,{password=it},label={Text("Password")},modifier=Modifier.fillMaxWidth());Button(onClick={if(email.isBlank()||password.isBlank())msg="Enter email/password." else{loading=true;adminLogin(email,password){s,m->loading=false;msg=m;if(s!=null){context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString("admin_email",email).apply();session=s;saveAdminSession(context,s);password="";loadDash(s)}}}},modifier=Modifier.fillMaxWidth()){Text("Login")};TextButton(onClick={if(email.isBlank())msg="Enter admin email first." else forgotAdminPassword(email){ok->msg=if(ok)"Reset email sent. Check inbox." else "Could not send reset email."}}){Text("Forgot Password?")};if(msg.isNotBlank())Text(msg)}}}else{if(loading)LinearProgressIndicator(Modifier.fillMaxWidth());data?.let{d->LazyVerticalGrid(columns=GridCells.Fixed(2),modifier=Modifier.height(190.dp)){item{AdminCountCard("Bookings",d.bookings.size,"📅")};item{AdminCountCard("Astrology",d.astrology.size,"🔮")};item{AdminCountCard("Products",d.productCount,"🛍️")};item{AdminCountCard("Orders",d.orders.size,"📦")}};Text("Booking Management",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);d.bookings.forEach{b->Card(Modifier.fillMaxWidth().padding(vertical=4.dp)){Column(Modifier.padding(10.dp)){Text(b.service,fontWeight=FontWeight.Bold);Text("${b.name} • ${b.mobile} • ${b.city}",style=MaterialTheme.typography.bodySmall);Row{TextButton(onClick={status("bookings?id=eq.${b.id}","status","contacted")}){Text("Contacted")};TextButton(onClick={status("bookings?id=eq.${b.id}","status","confirmed")}){Text("Confirmed")};TextButton(onClick={status("bookings?id=eq.${b.id}","status","completed")}){Text("Complete")}}}}};Text("Astrology Management",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);d.astrology.forEach{a->Card(Modifier.fillMaxWidth().padding(vertical=4.dp)){Column(Modifier.padding(10.dp)){Text(a.type,fontWeight=FontWeight.Bold);Text("${a.name} • ${a.mobile} • ${a.place}",style=MaterialTheme.typography.bodySmall);Row{TextButton(onClick={status("astrology_requests?id=eq.${a.id}","status","reviewing")}){Text("Reviewing")};TextButton(onClick={status("astrology_requests?id=eq.${a.id}","status","completed")}){Text("Complete")}}}}}};Text("Product Management",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);Text("Photo required • Currency fixed to INR",style=MaterialTheme.typography.bodySmall);Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp)){OutlinedTextField(pn,{pn=it},label={Text("Product name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(cat,{cat=it},label={Text("Category")},modifier=Modifier.fillMaxWidth());OutlinedTextField(price,{price=it},label={Text("Price (INR)")},modifier=Modifier.fillMaxWidth());OutlinedTextField(desc,{desc=it},label={Text("Description")},modifier=Modifier.fillMaxWidth());OutlinedTextField(ext,{ext=it},label={Text("External link (optional)")},modifier=Modifier.fillMaxWidth());OutlinedButton(onClick={picker.launch("image/*")},modifier=Modifier.fillMaxWidth()){Text(if(photo==null)"📷 Choose Product Photo" else "✅ Photo Selected")};Button(onClick={val s=session?:return@Button;val uri=photo;if(pn.isBlank()||cat.isBlank())msg="Enter product name/category." else if(uri==null)msg="Please choose a product photo." else{val amount=price.toDoubleOrNull();if(amount==null||amount<0)msg="Enter valid INR price." else{loading=true;uploadProductPhoto(context,s.accessToken,uri){url->if(url==null){loading=false;msg="Photo upload failed."}else{val j=JSONObject().put("name",pn).put("category",cat).put("description",desc).put("price",amount).put("currency","INR").put("image_url",url).put("external_url",ext.ifBlank{JSONObject.NULL}).put("is_free",amount==0.0).put("is_active",true);adminWrite(s.accessToken,"products","POST",j){ok->loading=false;msg=if(ok)"✅ Product added with photo in INR." else "Could not add product.";if(ok){pn="";desc="";ext="";price="0";photo=null;loadDash(s)}}}}}}},modifier=Modifier.fillMaxWidth()){Text("Add Product")}}};Text("Service Contact Details",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp)){var expanded by remember{mutableStateOf(false)};Box{OutlinedButton(onClick={expanded=true},modifier=Modifier.fillMaxWidth()){Text("${cs.icon} ${cs.title}")};DropdownMenu(expanded,onDismissRequest={expanded=false}){services.forEach{s->DropdownMenuItem(text={Text("${s.icon} ${s.title}")},onClick={cs=s;expanded=false})}}};OutlinedTextField(cn,{cn=it},label={Text("Contact name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(cp,{cp=it},label={Text("Phone")},modifier=Modifier.fillMaxWidth());OutlinedTextField(ce,{ce=it},label={Text("Email")},modifier=Modifier.fillMaxWidth());OutlinedTextField(cw,{cw=it},label={Text("WhatsApp")},modifier=Modifier.fillMaxWidth());Button(onClick={val s=session?:return@Button;upsertServiceContact(s.accessToken,ServiceContact(cs.id,cn,cp,ce,cw)){ok->msg=if(ok)"✅ ${cs.title} contact saved." else "Could not save contact."}},modifier=Modifier.fillMaxWidth()){Text("Save Service Contact")}}};data?.let{d->Text("Order Management",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);d.orders.forEach{o->Card(Modifier.fillMaxWidth().padding(vertical=4.dp)){Column(Modifier.padding(10.dp)){Text(o.name.ifBlank{"Order"},fontWeight=FontWeight.Bold);Text("${o.mobile} • ${o.amount}");Row{TextButton(onClick={status("orders?id=eq.${o.id}","order_status","processing")}){Text("Processing")};TextButton(onClick={status("orders?id=eq.${o.id}","order_status","delivered")}){Text("Delivered")}}}}}};Button(onClick={session?.let{loadDash(it)}},modifier=Modifier.fillMaxWidth()){Text("Refresh Dashboard")};OutlinedButton(onClick={session=null;data=null;saveAdminSession(context,null);msg="Logged out."},modifier=Modifier.fillMaxWidth()){Text("Logout")};if(msg.isNotBlank())Text(msg)}}}
-@Composable fun AdminCountCard(label:String,count:Int,icon:String){Card(Modifier.fillMaxWidth().padding(3.dp)){Row(Modifier.fillMaxWidth().padding(14.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){Column{Text(count.toString(),style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold);Text(label,style=MaterialTheme.typography.bodySmall)};Text(icon)}}}
+@Composable fun RawalworldApp(){
+    var tab by remember{mutableStateOf("home")}
+    Scaffold(bottomBar={NavigationBar{
+        NavigationBarItem(tab=="home",{tab="home"},{Icon(Icons.Default.Home,null)},label={Text("Home")})
+        NavigationBarItem(tab=="shop",{tab="shop"},{Icon(Icons.Default.ShoppingCart,null)},label={Text("Shop")})
+        NavigationBarItem(tab=="gallery",{tab="gallery"},{Icon(Icons.Default.Photo,null)},label={Text("Gallery")})
+        NavigationBarItem(tab=="profile",{tab="profile"},{Icon(Icons.Default.Person,null)},label={Text("Profile")})
+        NavigationBarItem(tab=="admin",{tab="admin"},{Icon(Icons.Default.Lock,null)},label={Text("Admin")})
+    }}){p->Box(Modifier.fillMaxSize().padding(p)){when(tab){"shop"->ShopScreen();"gallery"->GalleryScreen();"profile"->ProfileScreen();"admin"->AdminScreen();else->HomeScreen{tab=it}}}}
+}
+
+@Composable fun HomeScreen(go:(String)->Unit){
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){
+        Row(verticalAlignment=Alignment.CenterVertically){Image(painterResource(R.drawable.rawalworld_ganeshji_final),"Ganeshji Rawalworld",Modifier.size(82.dp),contentScale=ContentScale.Fit);Spacer(Modifier.width(12.dp));Column{Text("Rawalworld",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold);Text("Gujarat lifestyle & services")}}
+        Spacer(Modifier.height(14.dp))
+        Card(colors=CardDefaults.cardColors(containerColor=Purple)){Column(Modifier.padding(18.dp)){Text("Everything you need, in one app.",color=Color.White,style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold);Text("Astrology • Events • Travel • Shopping • Gallery",color=Color.White)}}
+        Spacer(Modifier.height(14.dp))
+        listOf("🔮 Astrology","🎉 Events","🌸 Decoration","🍽️ Catering","💼 Consultancy","✈️ Tours & Travel").forEach{Card(Modifier.fillMaxWidth().padding(vertical=5.dp)){Text(it,Modifier.padding(16.dp),fontWeight=FontWeight.Bold)}}
+        Button(onClick={go("shop")},Modifier.fillMaxWidth().padding(top=12.dp)){Text("Open Online Shopping")}
+        Text("📞 +91 77093 78969   ✉ rawalworld@gmail.com",Modifier.padding(top=18.dp),style=MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable fun ShopScreen(){
+    val context=LocalContext.current
+    var products by remember{mutableStateOf<List<ProductRow>>(emptyList())}
+    var loading by remember{mutableStateOf(true)}
+    var selected by remember{mutableStateOf<ProductRow?>(null)}
+    LaunchedEffect(Unit){Thread{val out=mutableListOf<ProductRow>();try{val a=getArray("products?select=id,name,category,description,price,is_active&is_active=eq.true&order=created_at.desc");for(i in 0 until a.length()){val x=a.getJSONObject(i);out+=ProductRow(x.optString("id"),x.optString("name"),x.optString("category"),x.optString("description"),x.optDouble("price"),true)}}catch(_:Exception){};ui{products=out;loading=false}}.start()}
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){
+        Text("🛍️ Online Shopping",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
+        Text("Products are shown from your Admin database.")
+        if(loading) CircularProgressIndicator(Modifier.padding(16.dp))
+        if(!loading&&products.isEmpty()) Text("No active products found.",Modifier.padding(top=14.dp))
+        products.forEach{p->Card(Modifier.fillMaxWidth().padding(vertical=6.dp)){Column(Modifier.padding(14.dp)){Text(p.name,fontWeight=FontWeight.Bold);Text(p.category,style=MaterialTheme.typography.bodySmall);if(p.description.isNotBlank())Text(p.description);Text("₹ ${String.format("%.2f",p.price)}",fontWeight=FontWeight.Bold);Button(onClick={selected=p},Modifier.fillMaxWidth().padding(top=8.dp)){Text("Buy Now")}}}}
+    }
+    selected?.let{p->CheckoutDialog(context,p,{selected=null})}
+}
+
+@Composable fun CheckoutDialog(context:Context,p:ProductRow,onClose:()->Unit){
+    var qty by remember{mutableStateOf("1")};var name by remember{mutableStateOf("")};var mobile by remember{mutableStateOf("")};var address by remember{mutableStateOf("")};var pincode by remember{mutableStateOf("")};var msg by remember{mutableStateOf("")};var busy by remember{mutableStateOf(false)}
+    AlertDialog(onDismissRequest=onClose,title={Text("Checkout — ${p.name}")},text={Column(Modifier.verticalScroll(rememberScrollState())){
+        OutlinedTextField(qty,{qty=it.filter(Char::isDigit)},label={Text("Quantity")},modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(name,{name=it},label={Text("Purchaser name")},modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(mobile,{mobile=it},label={Text("Mobile")},modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(address,{address=it},label={Text("Delivery address")},modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(pincode,{pincode=it},label={Text("Pincode")},modifier=Modifier.fillMaxWidth())
+        val q=qty.toIntOrNull()?:1
+        Text("Total: ₹ ${String.format("%.2f",p.price*q)}",fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp))
+        if(msg.isNotBlank())Text(msg,Modifier.padding(top=6.dp))
+    }},confirmButton={Button(enabled=!busy,onClick={
+        val q=(qty.toIntOrNull()?:0).coerceAtLeast(1)
+        if(name.isBlank()||mobile.isBlank()||address.isBlank()||pincode.isBlank()){msg="Please complete all delivery details.";return@Button}
+        busy=true;val total=p.price*q
+        Thread{
+            val orderOk=try{write("orders","POST",JSONObject().put("product_id",p.id).put("product_name",p.name).put("quantity",q).put("unit_price",p.price).put("total_amount",total).put("currency","INR").put("customer_name",name).put("mobile",mobile).put("delivery_address",address).put("pincode",pincode).put("payment_method","UPI / GPay").put("payment_status","pending").put("order_status","submitted"))}catch(_:Exception){false}
+            ui{
+                if(!orderOk){busy=false;msg="Could not submit order."}
+                else loadPayment{payee,upi->busy=false;try{val uri=Uri.parse("upi://pay?pa=${Uri.encode(upi)}&pn=${Uri.encode(payee)}&am=${String.format("%.2f",total)}&cu=INR&tn=${Uri.encode(p.name)}");context.startActivity(Intent(Intent.ACTION_VIEW,uri));msg="Order submitted. Opening UPI / GPay…"}catch(_:Exception){msg="Order submitted. UPI app could not open."}}
+            }
+        }.start()
+    }){Text("Continue to Payment")}},dismissButton={TextButton(onClick=onClose){Text("Close")}})
+}
+
+@Composable fun GalleryScreen(){
+    var rows by remember{mutableStateOf<List<GalleryRow>>(emptyList())}
+    LaunchedEffect(Unit){Thread{val out=mutableListOf<GalleryRow>();try{val a=getArray("gallery?select=title,gallery_type,image_url&is_active=eq.true&order=created_at.desc");for(i in 0 until a.length()){val x=a.getJSONObject(i);out+=GalleryRow(x.optString("title"),x.optString("gallery_type"),x.optString("image_url"))}}catch(_:Exception){};ui{rows=out}}.start()}
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){Text("📷 Gallery",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);if(rows.isEmpty())Text("No gallery photos found.") else rows.forEach{Card(Modifier.fillMaxWidth().padding(vertical=5.dp)){Column(Modifier.padding(14.dp)){Text(it.title,fontWeight=FontWeight.Bold);Text(it.type,style=MaterialTheme.typography.bodySmall)}}}}
+}
+
+@Composable fun ProfileScreen(){
+    val c=LocalContext.current
+    var n by remember{mutableStateOf(prefs(c).getString("name","")?:"")};var m by remember{mutableStateOf(prefs(c).getString("mobile","")?:"")};var msg by remember{mutableStateOf("")}
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){Text("👤 Profile",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);OutlinedTextField(n,{n=it},label={Text("Name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(m,{m=it},label={Text("Mobile")},modifier=Modifier.fillMaxWidth());Button(onClick={prefs(c).edit().putString("name",n).putString("mobile",m).apply();msg="Profile saved."},Modifier.fillMaxWidth().padding(top=10.dp)){Text("Save Profile")};if(msg.isNotBlank())Text(msg)}
+}
+
+@Composable fun AdminScreen(){
+    val context=LocalContext.current
+    var auth by remember{mutableStateOf(token(context))}
+    if(auth.isBlank()) AdminLogin(context){auth=it} else AdminDashboard(context,auth){saveToken(context,"");auth=""}
+}
+
+@Composable fun AdminLogin(context:Context,onLogin:(String)->Unit){
+    var email by remember{mutableStateOf("")};var pass by remember{mutableStateOf("")};var msg by remember{mutableStateOf("")}
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){
+        Text("🔐 Rawalworld Admin",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
+        OutlinedTextField(email,{email=it},label={Text("Email")},modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(pass,{pass=it},label={Text("Password")},modifier=Modifier.fillMaxWidth())
+        Button(onClick={login(email.trim(),pass){t,m->msg=m;if(!t.isNullOrBlank()){saveToken(context,t);onLogin(t)}}},Modifier.fillMaxWidth().padding(top=10.dp)){Text("Login")}
+        TextButton(onClick={if(email.isBlank())msg="Enter email first." else forgot(email.trim()){msg=if(it)"Password reset email sent." else "Could not send reset email."}},Modifier.fillMaxWidth()){Text("Forgot Password")}
+        if(msg.isNotBlank())Text(msg)
+    }
+}
+
+@Composable fun AdminDashboard(context:Context,auth:String,logout:()->Unit){
+    var products by remember{mutableStateOf<List<ProductRow>>(emptyList())}
+    var masters by remember{mutableStateOf<List<MasterRow>>(emptyList())}
+    var clients by remember{mutableStateOf<List<ClientRow>>(emptyList())}
+    var payee by remember{mutableStateOf("Haresh Rawal")};var upi by remember{mutableStateOf("harshrawal1929-1@okicici")};var msg by remember{mutableStateOf("")};var refresh by remember{mutableStateOf(0)}
+    var editProduct by remember{mutableStateOf<ProductRow?>(null)};var editMaster by remember{mutableStateOf<MasterRow?>(null)}
+    fun reload(){refresh++}
+    LaunchedEffect(refresh){
+        loadPayment{a,b->payee=a;upi=b}
+        Thread{
+            val ps=mutableListOf<ProductRow>();val ms=mutableListOf<MasterRow>();val cs=mutableListOf<ClientRow>()
+            try{val a=getArray("products?select=id,name,category,description,price,is_active&order=created_at.desc",auth);for(i in 0 until a.length()){val x=a.getJSONObject(i);ps+=ProductRow(x.optString("id"),x.optString("name"),x.optString("category"),x.optString("description"),x.optDouble("price"),x.optBoolean("is_active",true))}}catch(_:Exception){}
+            try{val a=getArray("masters?select=id,master_type,name,is_active&order=master_type.asc,name.asc",auth);for(i in 0 until a.length()){val x=a.getJSONObject(i);ms+=MasterRow(x.optString("id"),x.optString("master_type"),x.optString("name"),x.optBoolean("is_active",true))}}catch(_:Exception){}
+            try{val a=getArray("clients?select=customer_name,mobile,email,city,delivery_address,pincode,source&order=updated_at.desc&limit=200",auth);for(i in 0 until a.length()){val x=a.getJSONObject(i);cs+=ClientRow(x.optString("customer_name"),x.optString("mobile"),x.optString("email"),x.optString("city"),x.optString("delivery_address"),x.optString("pincode"),x.optString("source"))}}catch(_:Exception){}
+            ui{products=ps;masters=ms;clients=cs}
+        }.start()
+    }
+    Column(Modifier.fillMaxSize().padding(14.dp).verticalScroll(rememberScrollState())){
+        Text("🔐 ADMIN MANAGEMENT",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.ExtraBold)
+        Section("PAYMENT MASTER"){
+            OutlinedTextField(payee,{payee=it},label={Text("Payee name")},modifier=Modifier.fillMaxWidth())
+            OutlinedTextField(upi,{upi=it},label={Text("UPI ID / GPay UPI")},modifier=Modifier.fillMaxWidth())
+            Button(onClick={if(payee.isBlank()||upi.isBlank()||!upi.contains("@")){msg="Enter valid payment details."}else saveSetting(auth,"payment_payee_name",payee.trim()){a->if(!a)msg="Could not save payee name." else saveSetting(auth,"payment_upi_id",upi.trim()){b->msg=if(b)"✅ Payment Master updated." else "Could not save UPI ID."}}},Modifier.fillMaxWidth()){Text("Save Payment Master")}
+        }
+        Section("PRODUCT EDIT / DELETE / ACTIVE-INACTIVE"){
+            if(products.isEmpty())Text("No products found.")
+            products.forEach{p->Card(Modifier.fillMaxWidth().padding(vertical=4.dp)){Column(Modifier.padding(10.dp)){Text(p.name,fontWeight=FontWeight.Bold);Text("${p.category} • ₹ ${String.format("%.2f",p.price)} • ${if(p.active)"ACTIVE" else "INACTIVE"}");Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){OutlinedButton(onClick={editProduct=p},Modifier.weight(1f)){Text("Edit")};OutlinedButton(onClick={Thread{val ok=try{write("products?id=eq.${p.id}","PATCH",JSONObject().put("is_active",!p.active),auth)}catch(_:Exception){false};ui{msg=if(ok)"Product status updated." else "Status update failed.";if(ok)reload()}}.start()},Modifier.weight(1f)){Text(if(p.active)"Inactive" else "Activate")}};OutlinedButton(onClick={Thread{val ok=try{write("products?id=eq.${p.id}","DELETE",null,auth)}catch(_:Exception){false};ui{msg=if(ok)"Product deleted." else "Delete failed.";if(ok)reload()}}.start()},Modifier.fillMaxWidth()){Text("Delete Product")}}}}
+        }
+        Section("MASTER EDIT / DELETE"){
+            if(masters.isEmpty())Text("No masters found.")
+            masters.forEach{m->Card(Modifier.fillMaxWidth().padding(vertical=4.dp)){Column(Modifier.padding(10.dp)){Text(m.name,fontWeight=FontWeight.Bold);Text("${m.type} • ${if(m.active)"ACTIVE" else "INACTIVE"}");Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){OutlinedButton(onClick={editMaster=m},Modifier.weight(1f)){Text("Edit")};OutlinedButton(onClick={Thread{val ok=try{write("masters?id=eq.${m.id}","DELETE",null,auth)}catch(_:Exception){false};ui{msg=if(ok)"Master deleted." else "Master delete failed.";if(ok)reload()}}.start()},Modifier.weight(1f)){Text("Delete")}}}}}
+        }
+        Section("CLIENT RECORDS"){
+            Text("${clients.size} customer record(s)",fontWeight=FontWeight.Bold)
+            if(clients.isEmpty())Text("No client records yet.")
+            clients.forEach{c->Card(Modifier.fillMaxWidth().padding(vertical=4.dp)){Column(Modifier.padding(10.dp)){Text(if(c.name.isBlank())"Client" else c.name,fontWeight=FontWeight.Bold);if(c.mobile.isNotBlank())Text("📞 ${c.mobile}");if(c.email.isNotBlank())Text("✉ ${c.email}");if(c.city.isNotBlank())Text("📍 ${c.city}");if(c.address.isNotBlank())Text(c.address);if(c.pincode.isNotBlank())Text("Pincode: ${c.pincode}");if(c.source.isNotBlank())Text("Source: ${c.source}",style=MaterialTheme.typography.bodySmall)}}}
+        }
+        Button(onClick={reload()},Modifier.fillMaxWidth()){Text("Refresh Admin")}
+        OutlinedButton(onClick=logout,Modifier.fillMaxWidth().padding(top=8.dp)){Text("Logout")}
+        if(msg.isNotBlank())Text(msg,Modifier.padding(top=8.dp))
+    }
+    editProduct?.let{p->ProductEditDialog(p,auth,{editProduct=null;reload()},{editProduct=null})}
+    editMaster?.let{m->MasterEditDialog(m,auth,{editMaster=null;reload()},{editMaster=null})}
+}
+
+@Composable fun Section(title:String,content:@Composable ColumnScope.()->Unit){
+    Text(title,color=Purple,fontWeight=FontWeight.ExtraBold,modifier=Modifier.padding(top=14.dp,bottom=6.dp))
+    Card(Modifier.fillMaxWidth()){Column(Modifier.padding(12.dp),content=content)}
+}
+
+@Composable fun ProductEditDialog(p:ProductRow,auth:String,onSaved:()->Unit,onClose:()->Unit){
+    var name by remember{mutableStateOf(p.name)};var price by remember{mutableStateOf(p.price.toString())};var desc by remember{mutableStateOf(p.description)};var msg by remember{mutableStateOf("")}
+    AlertDialog(onDismissRequest=onClose,title={Text("Edit Product")},text={Column{OutlinedTextField(name,{name=it},label={Text("Product name")},modifier=Modifier.fillMaxWidth());OutlinedTextField(price,{price=it},label={Text("Price INR")},modifier=Modifier.fillMaxWidth());OutlinedTextField(desc,{desc=it},label={Text("Description")},modifier=Modifier.fillMaxWidth());if(msg.isNotBlank())Text(msg)}},confirmButton={Button(onClick={val amt=price.toDoubleOrNull();if(name.isBlank()||amt==null){msg="Enter valid name and price."}else Thread{val ok=try{write("products?id=eq.${p.id}","PATCH",JSONObject().put("name",name.trim()).put("price",amt).put("description",desc.trim()),auth)}catch(_:Exception){false};ui{if(ok)onSaved() else msg="Product update failed."}}.start()}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
+}
+
+@Composable fun MasterEditDialog(m:MasterRow,auth:String,onSaved:()->Unit,onClose:()->Unit){
+    var name by remember{mutableStateOf(m.name)};var msg by remember{mutableStateOf("")}
+    AlertDialog(onDismissRequest=onClose,title={Text("Edit Master")},text={Column{OutlinedTextField(name,{name=it},label={Text("Master name")},modifier=Modifier.fillMaxWidth());if(msg.isNotBlank())Text(msg)}},confirmButton={Button(onClick={if(name.isBlank()){msg="Enter master name."}else Thread{val ok=try{write("masters?id=eq.${m.id}","PATCH",JSONObject().put("name",name.trim()),auth)}catch(_:Exception){false};ui{if(ok)onSaved() else msg="Master update failed."}}.start()}){Text("Save")}},dismissButton={TextButton(onClick=onClose){Text("Cancel")}})
+}
