@@ -8,6 +8,7 @@ on:
       - '.github/assets/MainActivity.v2.kt'
       - '.github/assets/fix_service_contacts_v2.py'
       - '.github/assets/fix_admin_dashboard_v2.py'
+      - '.github/assets/fix_travel_v2.py'
       - '.github/assets/rawalworld_logo.b64'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
@@ -37,6 +38,7 @@ jobs:
           cp .github/assets/MainActivity.v2.kt app/src/main/java/com/astrolife/app/MainActivityV2.kt
           python3 .github/assets/fix_service_contacts_v2.py
           python3 .github/assets/fix_admin_dashboard_v2.py
+          python3 .github/assets/fix_travel_v2.py
           python3 - <<'PY'
           from pathlib import Path
           p=Path('app/src/main/java/com/astrolife/app/MainActivityV2.kt')
@@ -46,6 +48,8 @@ jobs:
           s=s.replace(old,new)
           p.write_text(s,encoding='utf-8')
           PY
+          mkdir -p app/src/main/res/drawable
+          base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_logo.jpg
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           from pathlib import Path
@@ -56,8 +60,8 @@ jobs:
           root=tree.getroot()
           app=root.find('application')
           app.set('{%s}label'%ns,'Rawalworld')
-          app.attrib.pop('{%s}icon'%ns, None)
-          app.attrib.pop('{%s}roundIcon'%ns, None)
+          app.set('{%s}icon'%ns,'@drawable/rawalworld_logo')
+          app.set('{%s}roundIcon'%ns,'@drawable/rawalworld_logo')
           for a in list(app.findall('activity')):
               app.remove(a)
           act=ET.SubElement(app,'activity')
