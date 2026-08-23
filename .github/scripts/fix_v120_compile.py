@@ -2,6 +2,8 @@ from pathlib import Path
 
 p = Path('app/src/main/java/com/astrolife/app/MainActivity.kt')
 s = p.read_text()
+
+# Keep ShopScreen in a compiler-safe form while retaining product sharing.
 start = s.find('@Composable fun ShopScreen(lang:String){')
 end = s.find('@Composable fun CheckoutDialog', start)
 if start < 0 or end < 0:
@@ -94,4 +96,71 @@ shop = r'''@Composable fun ShopScreen(lang:String){
 }'''
 
 s = s[:start] + shop + '\n\n' + s[end:]
+
+# Replace the deeply nested donation button lambda with a simple compiler-safe flow.
+d_start = s.find('@Composable fun DonationScreen(lang:String,back:()->Unit){')
+d_end = s.find('@Composable fun AdminScreen', d_start)
+if d_start < 0 or d_end < 0:
+    raise SystemExit('DonationScreen markers not found')
+
+donation = r'''@Composable fun DonationScreen(lang:String,back:()->Unit){
+    val context=LocalContext.current
+    var name by remember{mutableStateOf(prefs(context).getString("name","")?:"")}
+    var mobile by remember{mutableStateOf(prefs(context).getString("mobile","")?:"")}
+    var amount by remember{mutableStateOf("")}
+    var note by remember{mutableStateOf("")}
+    var msg by remember{mutableStateOf("")}
+
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())){
+        TextButton(onClick=back){Text(rwText(lang,"← Back to home","← હોમ પર પાછા","← होम पर वापस","← Retour à l'accueil"))}
+        Text(rwText(lang,"❤️ Donation for Needy People","❤️ જરૂરિયાતમંદ લોકો માટે દાન","❤️ ज़रूरतमंद लोगों के लिए दान","❤️ Don pour les personnes dans le besoin"),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
+        Text(rwText(lang,"Please verify the beneficiary or cause before donating.","દાન કરતા પહેલાં લાભાર્થી અથવા હેતુ ચકાસો.","दान करने से पहले लाभार्थी या उद्देश्य की पुष्टि करें।","Vérifiez le bénéficiaire ou la cause avant de donner."),style=MaterialTheme.typography.bodySmall)
+
+        OutlinedTextField(name,{name=it},label={Text(rwText(lang,"Donor name","દાતાનું નામ","दाता का नाम","Nom du donateur"))},modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(mobile,{mobile=it},label={Text(rwText(lang,"Mobile","મોબાઇલ","मोबाइल","Téléphone"))},modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(amount,{amount=it},label={Text(rwText(lang,"Amount INR","રકમ INR","राशि INR","Montant INR"))},modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(note,{note=it},label={Text(rwText(lang,"Purpose / note","હેતુ / નોંધ","उद्देश्य / नोट","Objet / note"))},modifier=Modifier.fillMaxWidth())
+
+        Button(
+            onClick={
+                val donationAmount=amount.toDoubleOrNull()
+                if(name.isBlank() || mobile.isBlank() || donationAmount==null || donationAmount<=0.0){
+                    msg=rwText(lang,"Enter donor name, mobile and valid amount.","દાતાનું નામ, મોબાઇલ અને માન્ય રકમ દાખલ કરો.","दाता का नाम, मोबाइल और मान्य राशि दर्ज करें।","Saisissez nom, téléphone et montant valide.")
+                }else{
+                    val donorName=name.trim()
+                    val donorMobile=mobile.trim()
+                    val purpose=note.trim()
+                    Thread{
+                        try{
+                            write("donations","POST",JSONObject()
+                                .put("donor_name",donorName)
+                                .put("mobile",donorMobile)
+                                .put("amount",donationAmount)
+                                .put("currency","INR")
+                                .put("purpose",if(purpose.isBlank())JSONObject.NULL else purpose)
+                                .put("payment_method","UPI / GPay")
+                                .put("payment_status","initiated"))
+                        }catch(_:Exception){}
+                    }.start()
+                    loadPayment{payee,upi->
+                        try{
+                            val paymentNote="Donation for needy people"+(if(purpose.isBlank())"" else " - $purpose")
+                            val uri=Uri.parse("upi://pay?pa=${Uri.encode(upi)}&pn=${Uri.encode(payee)}&am=${String.format("%.2f",donationAmount)}&cu=INR&tn=${Uri.encode(paymentNote)}")
+                            context.startActivity(Intent(Intent.ACTION_VIEW,uri))
+                            msg=rwText(lang,"Opening UPI / GPay...","UPI / GPay ખોલી રહ્યા છીએ...","UPI / GPay खोला जा रहा है...","Ouverture UPI / GPay...")
+                        }catch(_:Exception){
+                            msg=rwText(lang,"UPI app could not open.","UPI એપ ખોલી શકાઈ નહીં.","UPI ऐप नहीं खुल सका।","Impossible d'ouvrir l'application UPI.")
+                        }
+                    }
+                }
+            },
+            modifier=Modifier.fillMaxWidth().padding(top=10.dp)
+        ){
+            Text(rwText(lang,"Donate with UPI / GPay","UPI / GPay થી દાન કરો","UPI / GPay से दान करें","Donner avec UPI / GPay"))
+        }
+        if(msg.isNotBlank())Text(msg,Modifier.padding(top=8.dp))
+    }
+}'''
+
+s = s[:d_start] + donation + '\n\n' + s[d_end:]
 p.write_text(s)
