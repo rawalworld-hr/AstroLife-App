@@ -164,3 +164,5 @@ donation = r'''@Composable fun DonationScreen(lang:String,back:()->Unit){
 
 s = s[:d_start] + donation + '\n\n' + s[d_end:]
 p.write_text(s)
+
+# Trigger final APK rebuild after compiler-safe donation fix.
