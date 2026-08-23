@@ -16,6 +16,34 @@ android {
         versionName = "1.1.0"
     }
 
+    val releaseKeystorePath = System.getenv("RAWALWORLD_KEYSTORE_PATH")
+    val releaseStorePassword = System.getenv("RAWALWORLD_STORE_PASSWORD")
+    val releaseKeyAlias = System.getenv("RAWALWORLD_KEY_ALIAS")
+    val releaseKeyPassword = System.getenv("RAWALWORLD_KEY_PASSWORD")
+
+    signingConfigs {
+        if (!releaseKeystorePath.isNullOrBlank() &&
+            !releaseStorePassword.isNullOrBlank() &&
+            !releaseKeyAlias.isNullOrBlank() &&
+            !releaseKeyPassword.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            if (signingConfigs.names.contains("release")) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
