@@ -9,6 +9,7 @@ on:
       - '.github/assets/fix_service_contacts_v2.py'
       - '.github/assets/fix_admin_dashboard_v2.py'
       - '.github/assets/fix_travel_v2.py'
+      - '.github/assets/sync_remaining_features_v3.py'
       - '.github/assets/rawalworld_logo.b64'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
@@ -29,7 +30,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Prepare Rawalworld V2 source and safe launcher
+      - name: Prepare Rawalworld synced source
         shell: bash
         run: |
           rm -f app/src/main/java/com/astrolife/app/MainActivity.kt
@@ -39,15 +40,7 @@ jobs:
           python3 .github/assets/fix_service_contacts_v2.py
           python3 .github/assets/fix_admin_dashboard_v2.py
           python3 .github/assets/fix_travel_v2.py
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('app/src/main/java/com/astrolife/app/MainActivityV2.kt')
-          s=p.read_text(encoding='utf-8')
-          old='Image(painterResource(R.drawable.rawalworld_logo),"Rawalworld",Modifier.size(76.dp),contentScale=ContentScale.Crop);Spacer(Modifier.width(12.dp));'
-          new='Text("🕉️",style=MaterialTheme.typography.displayMedium);Spacer(Modifier.width(12.dp));'
-          s=s.replace(old,new)
-          p.write_text(s,encoding='utf-8')
-          PY
+          python3 .github/assets/sync_remaining_features_v3.py
           mkdir -p app/src/main/res/drawable
           base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_logo.jpg
           python3 - <<'PY'
