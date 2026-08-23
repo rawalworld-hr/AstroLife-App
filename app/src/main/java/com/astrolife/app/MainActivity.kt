@@ -38,6 +38,14 @@ import java.net.URL
 data class Service(val icon: String, val title: String, val subtitle: String, val options: List<String>)
 data class Booking(val service: String, val name: String, val mobile: String, val city: String, val date: String, val note: String)
 data class Product(val name: String, val description: String, val price: String, val url: String?)
+data class AdminData(
+    val bookingCount: Int,
+    val astrologyCount: Int,
+    val productCount: Int,
+    val orderCount: Int,
+    val bookingLines: List<String>,
+    val astrologyLines: List<String>
+)
 
 private const val SUPABASE_URL = "https://hcpvuripnlhofxfczyyb.supabase.co"
 private const val SUPABASE_KEY = "sb_publishable_J8YoD4yenQO-nlEMoC1kvA_3_vJgGjg"
@@ -160,19 +168,81 @@ private fun fetchProducts(onDone: (List<Product>) -> Unit) {
             for (i in 0 until array.length()) {
                 val item = array.getJSONObject(i)
                 val isFree = item.optBoolean("is_free")
-                result.add(
-                    Product(
-                        name = item.optString("name"),
-                        description = item.optString("description"),
-                        price = if (isFree) "FREE" else "${item.optString("currency")} ${item.optString("price")}",
-                        url = item.optString("external_url").takeIf { it.isNotBlank() }
-                    )
-                )
+                result.add(Product(item.optString("name"), item.optString("description"), if (isFree) "FREE" else "${item.optString("currency")} ${item.optString("price")}", item.optString("external_url").takeIf { it.isNotBlank() }))
             }
             connection.disconnect()
         } catch (_: Exception) {
         }
         Handler(Looper.getMainLooper()).post { onDone(result) }
+    }.start()
+}
+
+private fun adminLogin(email: String, password: String, onDone: (String?, String) -> Unit) {
+    Thread {
+        var token: String? = null
+        var message = "Login failed."
+        try {
+            val connection = URL("$SUPABASE_URL/auth/v1/token?grant_type=password").openConnection() as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("apikey", SUPABASE_KEY)
+            connection.doOutput = true
+            val payload = JSONObject().put("email", email).put("password", password)
+            connection.outputStream.use { it.write(payload.toString().toByteArray()) }
+            val code = connection.responseCode
+            val body = if (code in 200..299) connection.inputStream.bufferedReader().use { it.readText() } else connection.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+            if (code in 200..299) {
+                token = JSONObject(body).optString("access_token").takeIf { it.isNotBlank() }
+                message = if (token != null) "Login successful." else "Login response was incomplete."
+            } else {
+                message = "Login failed. Check email/password."
+            }
+            connection.disconnect()
+        } catch (_: Exception) {
+            message = "Unable to connect to admin login."
+        }
+        Handler(Looper.getMainLooper()).post { onDone(token, message) }
+    }.start()
+}
+
+private fun fetchAdminData(token: String, onDone: (AdminData?, String) -> Unit) {
+    Thread {
+        try {
+            fun getArray(path: String): JSONArray {
+                val connection = URL("$SUPABASE_URL/rest/v1/$path").openConnection() as HttpURLConnection
+                connection.setRequestProperty("apikey", SUPABASE_KEY)
+                connection.setRequestProperty("Authorization", "Bearer $token")
+                val code = connection.responseCode
+                if (code !in 200..299) {
+                    connection.disconnect()
+                    throw IllegalStateException("Admin access denied")
+                }
+                val text = connection.inputStream.bufferedReader().use { it.readText() }
+                connection.disconnect()
+                return JSONArray(text)
+            }
+
+            val bookings = getArray("bookings?select=service,customer_name,mobile,city,status&order=created_at.desc&limit=20")
+            val astrology = getArray("astrology_requests?select=request_type,customer_name,mobile,birth_place,status&order=created_at.desc&limit=20")
+            val products = getArray("products?select=id&is_active=eq.true")
+            val orders = getArray("orders?select=id")
+
+            val bookingLines = mutableListOf<String>()
+            for (i in 0 until bookings.length()) {
+                val x = bookings.getJSONObject(i)
+                bookingLines.add("${x.optString("service", "Booking")} • ${x.optString("customer_name")} • ${x.optString("mobile")} • ${x.optString("city")} • ${x.optString("status", "submitted")}")
+            }
+            val astrologyLines = mutableListOf<String>()
+            for (i in 0 until astrology.length()) {
+                val x = astrology.getJSONObject(i)
+                astrologyLines.add("${x.optString("request_type", "Astrology")} • ${x.optString("customer_name")} • ${x.optString("mobile")} • ${x.optString("birth_place")} • ${x.optString("status", "submitted")}")
+            }
+
+            val data = AdminData(bookings.length(), astrology.length(), products.length(), orders.length(), bookingLines, astrologyLines)
+            Handler(Looper.getMainLooper()).post { onDone(data, "Dashboard updated.") }
+        } catch (_: Exception) {
+            Handler(Looper.getMainLooper()).post { onDone(null, "Unable to load admin data. This account may not have admin access.") }
+        }
     }.start()
 }
 
@@ -189,6 +259,7 @@ fun RawalworldApp() {
             NavigationBarItem(selected = screen == "bookings", onClick = { screen = "bookings"; bookings = loadBookings(context) }, icon = { Icon(Icons.Default.DateRange, null) }, label = { Text("Bookings") })
             NavigationBarItem(selected = screen == "service" && selectedService?.title == "Online Shopping", onClick = { selectedService = services.last(); screen = "service" }, icon = { Icon(Icons.Default.ShoppingCart, null) }, label = { Text("Shop") })
             NavigationBarItem(selected = screen == "profile", onClick = { screen = "profile" }, icon = { Icon(Icons.Default.Person, null) }, label = { Text("Profile") })
+            NavigationBarItem(selected = screen == "admin", onClick = { screen = "admin" }, icon = { Text("🔐") }, label = { Text("Admin") })
         }
     }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -197,6 +268,7 @@ fun RawalworldApp() {
                 "booking" -> selectedService?.let { service -> BookingScreen(service, { screen = "service" }) { booking -> bookings = bookings + booking; saveBookings(context, bookings) } }
                 "bookings" -> BookingsScreen(bookings)
                 "profile" -> ProfileScreen()
+                "admin" -> AdminScreen()
                 else -> HomeScreen { selectedService = it; screen = "service" }
             }
         }
@@ -408,5 +480,105 @@ fun ProfileScreen() {
         Spacer(Modifier.height(10.dp))
         Button(onClick = { prefs.edit().putString("name", name).putString("mobile", mobile).putString("email", email).putString("city", city).apply(); message = "Profile saved." }, modifier = Modifier.fillMaxWidth()) { Text("Save Profile") }
         if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message) }
+    }
+}
+
+@Composable
+fun AdminScreen() {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var token by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var data by remember { mutableStateOf<AdminData?>(null) }
+
+    fun refreshAdmin() {
+        val t = token ?: return
+        loading = true
+        message = "Loading dashboard..."
+        fetchAdminData(t) { result, msg ->
+            loading = false
+            data = result
+            message = msg
+        }
+    }
+
+    Column(Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
+        Text("🔐 Rawalworld Admin", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+        Text("Secure bookings and customer management", style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(16.dp))
+
+        if (token == null) {
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Admin Login", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(email, { email = it }, label = { Text("Admin email") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(password, { password = it }, label = { Text("Password") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(10.dp))
+                    Button(enabled = !loading, onClick = {
+                        if (email.isBlank() || password.isBlank()) {
+                            message = "Enter admin email and password."
+                        } else {
+                            loading = true
+                            message = "Signing in..."
+                            adminLogin(email.trim(), password) { newToken, msg ->
+                                loading = false
+                                token = newToken
+                                message = msg
+                                if (newToken != null) {
+                                    loading = true
+                                    fetchAdminData(newToken) { result, dashboardMsg ->
+                                        loading = false
+                                        data = result
+                                        message = dashboardMsg
+                                    }
+                                }
+                            }
+                        }
+                    }, modifier = Modifier.fillMaxWidth()) { Text(if (loading) "Please wait..." else "Login") }
+                    if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message, style = MaterialTheme.typography.bodySmall) }
+                }
+            }
+        } else {
+            val d = data
+            if (loading) CircularProgressIndicator()
+            if (d != null) {
+                Spacer(Modifier.height(8.dp))
+                LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.height(190.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item { AdminCountCard("Bookings", d.bookingCount, "📅") }
+                    item { AdminCountCard("Astrology", d.astrologyCount, "🔮") }
+                    item { AdminCountCard("Products", d.productCount, "🛍️") }
+                    item { AdminCountCard("Orders", d.orderCount, "📦") }
+                }
+                Text("Recent Bookings", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                if (d.bookingLines.isEmpty()) Text("No bookings yet.") else d.bookingLines.forEach { line ->
+                    Card(Modifier.fillMaxWidth().padding(bottom = 8.dp)) { Text(line, Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall) }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text("Recent Astrology Requests", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                if (d.astrologyLines.isEmpty()) Text("No astrology requests yet.") else d.astrologyLines.forEach { line ->
+                    Card(Modifier.fillMaxWidth().padding(bottom = 8.dp)) { Text(line, Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall) }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Button(onClick = { refreshAdmin() }, enabled = !loading, modifier = Modifier.fillMaxWidth()) { Text("Refresh Dashboard") }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = { token = null; data = null; password = ""; message = "Logged out." }, modifier = Modifier.fillMaxWidth()) { Text("Logout") }
+            if (message.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(message, style = MaterialTheme.typography.bodySmall) }
+        }
+    }
+}
+
+@Composable
+fun AdminCountCard(label: String, count: Int, icon: String) {
+    Card(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Column { Text(count.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(label, style = MaterialTheme.typography.bodySmall) }
+            Text(icon, style = MaterialTheme.typography.headlineMedium)
+        }
     }
 }
