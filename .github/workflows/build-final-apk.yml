@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/assets/MainActivity.v2.kt'
       - '.github/assets/fix_service_contacts_v2.py'
+      - '.github/assets/fix_admin_dashboard_v2.py'
       - '.github/assets/rawalworld_logo.b64'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
@@ -35,6 +36,7 @@ jobs:
           rm -f app/src/main/java/com/astrolife/app/MainActivityV2.kt
           cp .github/assets/MainActivity.v2.kt app/src/main/java/com/astrolife/app/MainActivityV2.kt
           python3 .github/assets/fix_service_contacts_v2.py
+          python3 .github/assets/fix_admin_dashboard_v2.py
           mkdir -p app/src/main/res/drawable
           base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_logo.jpg
           python3 - <<'PY'
