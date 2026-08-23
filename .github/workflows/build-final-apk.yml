@@ -18,6 +18,7 @@ on:
       - '.github/assets/fix_direct_open_v10.py'
       - '.github/assets/fix_cricket_map_admin_v11.py'
       - '.github/assets/fix_live_astrology_v12.py'
+      - '.github/assets/fix_payment_settings_v13.py'
       - '.github/assets/rawalworld_logo.b64'
       - '.github/workflows/build-final-apk.yml'
       - 'app/**'
@@ -57,6 +58,7 @@ jobs:
           python3 .github/assets/fix_direct_open_v10.py
           python3 .github/assets/fix_cricket_map_admin_v11.py
           python3 .github/assets/fix_live_astrology_v12.py
+          python3 .github/assets/fix_payment_settings_v13.py
           mkdir -p app/src/main/res/drawable
           base64 -d .github/assets/rawalworld_logo.b64 > app/src/main/res/drawable/rawalworld_logo.jpg
           python3 - <<'PY'
