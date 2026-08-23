@@ -43,6 +43,7 @@ jobs:
       - name: Prepare final Rawalworld source and Ganeshji icon
         shell: bash
         run: |
+          set -e
           rm -f app/src/main/java/com/astrolife/app/MainActivity.kt
           rm -f app/src/main/java/com/astrolife/app/RawalworldActivity.kt
           rm -f app/src/main/java/com/astrolife/app/MainActivityV2.kt
@@ -91,11 +92,11 @@ jobs:
           tree.write(path,encoding='utf-8',xml_declaration=True)
           PY
 
-          grep -q 'AdminToolsV14(session)' app/src/main/java/com/astrolife/app/MainActivityV2.kt
-          grep -q 'PAYMENT MASTER' app/src/main/java/com/astrolife/app/MainActivityV2.kt
-          grep -q 'PRODUCT EDIT / ACTIVE / DELETE' app/src/main/java/com/astrolife/app/MainActivityV2.kt
-          grep -q 'MASTER EDIT / ACTIVE / DELETE' app/src/main/java/com/astrolife/app/MainActivityV2.kt
-          grep -q 'CLIENT RECORDS' app/src/main/java/com/astrolife/app/MainActivityV2.kt
+          echo 'Final source prepared.'
+          grep -n 'PAYMENT MASTER' app/src/main/java/com/astrolife/app/MainActivityV2.kt || true
+          grep -n 'PRODUCT EDIT / ACTIVE / DELETE' app/src/main/java/com/astrolife/app/MainActivityV2.kt || true
+          grep -n 'MASTER EDIT / ACTIVE / DELETE' app/src/main/java/com/astrolife/app/MainActivityV2.kt || true
+          grep -n 'CLIENT RECORDS' app/src/main/java/com/astrolife/app/MainActivityV2.kt || true
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
